@@ -1,20 +1,48 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, RefreshCcw, Wallet, Hexagon, Circle, Triangle, Box } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useBank } from '@/hooks/use-bank'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+
+const networks = [
+  {
+    id: 'polygon',
+    name: 'Polygon',
+    icon: Hexagon,
+    color: 'text-[#8247E5]',
+    bg: 'bg-[#8247E5]/10',
+    border: 'border-[#8247E5]',
+  },
+  {
+    id: 'arbitrum',
+    name: 'Arbitrum',
+    icon: Circle,
+    color: 'text-[#28A0F0]',
+    bg: 'bg-[#28A0F0]/10',
+    border: 'border-[#28A0F0]',
+  },
+  {
+    id: 'optimism',
+    name: 'Optimism',
+    icon: Triangle,
+    color: 'text-[#FF0420]',
+    bg: 'bg-[#FF0420]/10',
+    border: 'border-[#FF0420]',
+  },
+  {
+    id: 'ethereum',
+    name: 'Ethereum',
+    icon: Box,
+    color: 'text-[#627EEA]',
+    bg: 'bg-[#627EEA]/10',
+    border: 'border-[#627EEA]',
+  },
+]
 
 export default function Carregar() {
   const navigate = useNavigate()
@@ -46,7 +74,6 @@ export default function Carregar() {
           setCotacaoBrl(5.15)
         }
       } catch (err) {
-        // Fallback in case of rate limits
         setCotacaoBrl(5.15)
       } finally {
         setLoadingRate(false)
@@ -151,15 +178,16 @@ export default function Carregar() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-24">
-      <header className="bg-[#8B5CF6] text-white p-4 sticky top-0 z-10 flex items-center shadow-md">
+    <div className="min-h-screen bg-white font-sans pb-24">
+      <header className="bg-[#8B5CF6] text-white p-4 sticky top-0 z-10 flex items-center shadow-sm">
         <Link to="/" className="mr-4 p-2 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft className="w-6 h-6" />
         </Link>
         <h1 className="text-lg font-medium">Carregar Cartão</h1>
       </header>
 
-      <main className="max-w-md mx-auto p-4 space-y-6">
+      <main className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {/* Input Valor BRL */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">Valor em BRL</label>
           <div className="relative">
@@ -171,79 +199,109 @@ export default function Carregar() {
               placeholder="0.00"
               value={valorBrl}
               onChange={(e) => setValorBrl(e.target.value)}
-              className="pl-12 py-6 text-lg border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl"
+              className="pl-12 py-6 text-lg border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl bg-white"
             />
           </div>
         </div>
 
+        {/* Card de Cotação */}
         {loadingRate || !cotacaoBrl ? (
-          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-36 w-full rounded-xl" />
         ) : (
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Cotação Atual (Tempo Real)</span>
-              <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />1 BRL ={' '}
-                {(1 / cotacaoBrl).toFixed(4)} USDT
-              </div>
+          <div className="bg-gradient-to-r from-[#8B5CF6] to-[#7c3aed] text-white rounded-xl p-4 shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-white/90">Cotação Atual (Tempo Real)</span>
+              <RefreshCcw className="w-4 h-4 text-white/90 animate-[spin_3s_linear_infinite]" />
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Spread Administrativo</span>
-              <span className="bg-[#8B5CF6] text-white text-xs px-2.5 py-1 rounded-md font-medium">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-2xl font-bold">1 BRL</span>
+              <span className="text-lg text-white/80 font-medium">
+                = {(1 / cotacaoBrl).toFixed(4)} USDT
+              </span>
+            </div>
+            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
+              <span className="text-sm text-white/90">Spread Administrativo</span>
+              <span className="bg-white text-[#8B5CF6] text-xs px-2.5 py-1 rounded-md font-bold">
                 {spread}%
               </span>
             </div>
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">Você recebe aprox.</span>
-              <span className="text-xl font-bold text-[#8B5CF6]">{valorUsdt.toFixed(2)} USDT</span>
-            </div>
+            {numValor > 0 && (
+              <div className="pt-3 mt-3 border-t border-white/20 flex items-center justify-between">
+                <span className="text-sm font-medium text-white/90">Você recebe aprox.</span>
+                <span className="text-xl font-bold">{valorUsdt.toFixed(2)} USDT</span>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Hash da carteira USDT
-            </label>
+        {/* Hash da Carteira */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Hash da carteira USDT
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Wallet className="w-5 h-5" />
+            </span>
             <Input
               placeholder="0x..."
               value={hashCripto}
               onChange={(e) => setHashCripto(e.target.value)}
-              className="py-6 border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl font-mono text-sm"
+              className="pl-12 py-6 border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl font-mono text-sm bg-white"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Rede</label>
-            <Select value={rede} onValueChange={setRede}>
-              <SelectTrigger className="py-6 border-slate-300 focus:ring-[#8B5CF6] rounded-xl">
-                <SelectValue placeholder="Selecione a rede" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="polygon">Polygon</SelectItem>
-                <SelectItem value="arbitrum">Arbitrum</SelectItem>
-                <SelectItem value="optimism">Optimism</SelectItem>
-                <SelectItem value="ethereum">Ethereum</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
+        {/* Seleção de Rede */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Rede</label>
+          <div className="grid grid-cols-4 gap-3">
+            {networks.map((net) => {
+              const Icon = net.icon
+              const isSelected = rede === net.id
+              return (
+                <button
+                  key={net.id}
+                  onClick={() => setRede(net.id)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                    isSelected
+                      ? `${net.border} ${net.bg}`
+                      : 'border-transparent bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <Icon className={`w-8 h-8 mb-2 ${net.color}`} />
+                  <span
+                    className={`text-[10px] font-medium ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}
+                  >
+                    {net.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Card de Resumo */}
         {numValor > 0 && (
-          <div className="bg-slate-200/60 rounded-xl p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Resumo da Operação</h3>
+          <div className="bg-slate-100 rounded-xl p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-slate-800 mb-3">Resumo da Operação</h3>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Valor (BRL)</span>
-              <span className="text-slate-700">R$ {numValor.toFixed(2)}</span>
+              <span className="text-slate-700 font-medium">R$ {numValor.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Spread ({spread}%)</span>
-              <span className="text-slate-700">- R$ {(numValor * (spread / 100)).toFixed(2)}</span>
+              <span className="text-slate-700 font-medium">
+                - R$ {(numValor * (spread / 100)).toFixed(2)}
+              </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-sm items-center">
               <span className="text-slate-500">Taxa de Serviço</span>
-              <span className="text-slate-700">R$ {taxaBrl.toFixed(2)}</span>
+              <span className="bg-[#8B5CF6] text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                R$ {taxaBrl.toFixed(2)}
+              </span>
             </div>
-            <div className="pt-2 border-t border-slate-300/50 flex justify-between text-base">
+            <div className="pt-3 border-t border-slate-200 flex justify-between text-base">
               <span className="font-medium text-slate-700">Custo Total (BRL)</span>
               <span className="font-bold text-slate-900">R$ {valorTotalBrl.toFixed(2)}</span>
             </div>
@@ -253,7 +311,7 @@ export default function Carregar() {
         <Button
           onClick={handleCarregar}
           disabled={submitting || !cotacaoBrl || numValor <= 0 || !hashCripto || !rede}
-          className="w-full py-6 text-base bg-[#8B5CF6] hover:bg-[#7c3aed] disabled:bg-slate-300 disabled:text-slate-500 text-white transition-colors rounded-xl font-semibold mt-4"
+          className="w-full mt-2 py-6 text-base bg-[#8B5CF6] hover:bg-[#7c3aed] disabled:bg-slate-300 disabled:text-slate-500 text-white transition-colors rounded-xl font-semibold shadow-sm"
         >
           {submitting ? 'Processando...' : 'Carregar USDT'}
         </Button>
