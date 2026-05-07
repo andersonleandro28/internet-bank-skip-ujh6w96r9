@@ -18,11 +18,17 @@ export interface Requisicao {
   created_at: string
 }
 
+export interface UsuarioInfo {
+  status: 'pendente' | 'aprovado' | 'reprovado'
+}
+
 interface BankContextType {
   conta: Conta | null
+  usuario: UsuarioInfo | null
   requisicoes: Requisicao[]
   refreshData: () => Promise<void>
   loading: boolean
+  error: string | null
 }
 
 const BankContext = createContext<BankContextType | undefined>(undefined)
@@ -36,31 +42,50 @@ export const useBank = () => {
 export const BankProvider = ({ children }: { children: ReactNode }) => {
   const { session } = useAuth()
   const [conta, setConta] = useState<Conta | null>(null)
+  const [usuario, setUsuario] = useState<UsuarioInfo | null>(null)
   const [requisicoes, setRequisicoes] = useState<Requisicao[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const refreshData = async () => {
     if (!session?.user?.id) return
     setLoading(true)
+    setError(null)
 
-    const { data: cData } = await supabase
-      .from('contas')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single()
+    try {
+      const { data: uData, error: uError } = await supabase
+        .from('usuarios')
+        .select('status')
+        .eq('id', session.user.id)
+        .single()
 
-    if (cData) setConta(cData)
+      if (uError) throw uError
+      if (uData) setUsuario(uData as UsuarioInfo)
 
-    const { data: rData } = await supabase
-      .from('requisicoes')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
+      const { data: cData, error: cError } = await supabase
+        .from('contas')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single()
 
-    if (rData) setRequisicoes(rData as Requisicao[])
+      if (cError && cError.code !== 'PGRST116') throw cError // Ignore no rows error
+      if (cData) setConta(cData)
 
-    setLoading(false)
+      const { data: rData, error: rError } = await supabase
+        .from('requisicoes')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (rError) throw rError
+      if (rData) setRequisicoes(rData as Requisicao[])
+    } catch (err: any) {
+      console.error('Erro ao buscar dados do banco:', err)
+      setError(err.message || 'Erro ao carregar os dados.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -68,13 +93,15 @@ export const BankProvider = ({ children }: { children: ReactNode }) => {
       refreshData()
     } else {
       setConta(null)
+      setUsuario(null)
       setRequisicoes([])
       setLoading(false)
+      setError(null)
     }
   }, [session])
 
   return (
-    <BankContext.Provider value={{ conta, requisicoes, refreshData, loading }}>
+    <BankContext.Provider value={{ conta, usuario, requisicoes, refreshData, loading, error }}>
       {children}
     </BankContext.Provider>
   )

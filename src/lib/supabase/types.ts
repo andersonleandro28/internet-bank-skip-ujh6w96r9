@@ -747,6 +747,8 @@ export const Constants = {
 //   Policy "cestas_itens_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (cesta_id IN ( SELECT cestas_clientes.id    FROM cestas_clientes   WHERE (cestas_clientes.user_id = auth.uid())))
 // Table: contas
+//   Policy "contas_insert" (INSERT, PERMISSIVE) roles={public}
+//     WITH CHECK: true
 //   Policy "contas_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 //   Policy "contas_update" (UPDATE, PERMISSIVE) roles={authenticated}
@@ -773,6 +775,8 @@ export const Constants = {
 //   Policy "taxas_servicos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
 // Table: usuarios
+//   Policy "usuarios_insert" (INSERT, PERMISSIVE) roles={public}
+//     WITH CHECK: true
 //   Policy "usuarios_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: ((id = auth.uid()) OR (( SELECT usuarios_1.role    FROM usuarios usuarios_1   WHERE (usuarios_1.id = auth.uid())) = 'admin'::role_usuario))
 //   Policy "usuarios_update" (UPDATE, PERMISSIVE) roles={authenticated}
