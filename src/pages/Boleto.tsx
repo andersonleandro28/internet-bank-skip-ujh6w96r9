@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Barcode as BarcodeIcon, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Camera, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
@@ -27,9 +26,7 @@ export default function BoletoPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (user) {
-      fetchTaxas()
-    }
+    if (user) fetchTaxas()
   }, [user])
 
   const fetchTaxas = async () => {
@@ -57,10 +54,8 @@ export default function BoletoPage() {
             .eq('ativo', true)
             .single()
 
-          if (item) {
+          if (item)
             setTaxas({ percentual: Number(item.taxa_percentual), fixa: Number(item.taxa_fixa) })
-            return
-          }
         }
       }
     } catch (e) {
@@ -76,13 +71,11 @@ export default function BoletoPage() {
     }
 
     setLoading(true)
-    // Delay simulado de busca
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Sucesso simulado
     setBoletoInfo({
       beneficiario: 'Companhia de Água e Energia S/A',
-      vencimento: new Date(Date.now() + 86400000 * 5).toISOString(), // +5 dias
+      vencimento: new Date(Date.now() + 86400000 * 5).toISOString(),
       valor: 185.5,
     })
     setIsCameraActive(false)
@@ -90,26 +83,19 @@ export default function BoletoPage() {
   }
 
   const handlePagar = async () => {
-    if (!senha) {
-      setError('Por favor, informe sua senha de confirmação.')
-      return
-    }
-
+    if (!senha) return setError('Por favor, informe sua senha de confirmação.')
     if (!conta || !boletoInfo || !user) return
 
     const taxaAplicada = boletoInfo.valor * (taxas.percentual / 100) + taxas.fixa
     const valorTotal = boletoInfo.valor + taxaAplicada
 
-    if (conta.saldo < valorTotal) {
-      setError('Saldo insuficiente para realizar este pagamento.')
-      return
-    }
+    if (conta.saldo < valorTotal)
+      return setError('Saldo insuficiente para realizar este pagamento.')
 
     setProcessing(true)
     setError('')
 
     try {
-      // 1. Deduzir saldo imediatamente
       const { error: updError } = await supabase
         .from('contas')
         .update({ saldo: conta.saldo - valorTotal })
@@ -117,7 +103,6 @@ export default function BoletoPage() {
 
       if (updError) throw updError
 
-      // 2. Criar requisição com status pendente
       const { error: reqError } = await supabase.from('requisicoes').insert({
         user_id: user.id,
         tipo: 'boleto',
@@ -150,9 +135,7 @@ export default function BoletoPage() {
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'environment' },
           })
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream
-          }
+          if (videoRef.current) videoRef.current.srcObject = stream
         } catch (err) {
           toast.error('Permissão de câmera negada ou indisponível')
           setIsCameraActive(false)
@@ -161,20 +144,17 @@ export default function BoletoPage() {
       startCamera()
 
       const timer = setTimeout(() => {
-        // Leitura simulada após 3 segundos
         buscarBoleto('341910900800000000000000000000000000000000000')
       }, 3000)
 
       return () => {
         clearTimeout(timer)
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop())
-        }
+        if (stream) stream.getTracks().forEach((track) => track.stop())
       }
     }, [])
 
     return (
-      <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in zoom-in duration-300">
+      <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
         <div className="flex-1 relative flex items-center justify-center overflow-hidden">
           <video
             ref={videoRef}
@@ -182,23 +162,18 @@ export default function BoletoPage() {
             playsInline
             className="absolute inset-0 w-full h-full object-cover opacity-70"
           />
-
-          <div className="absolute inset-0 border-[6px] border-[#8B5CF6]/40 z-10 m-8 rounded-2xl pointer-events-none" />
-
-          <div className="absolute top-1/2 left-8 right-8 h-1 bg-[#8B5CF6] animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] z-20 shadow-[0_0_15px_rgba(139,92,246,1)] pointer-events-none" />
-
-          <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-30 bg-gradient-to-b from-black/60 to-transparent">
+          <div className="absolute inset-0 border-[4px] border-[#8B5CF6]/50 z-10 m-6 rounded-[12px] pointer-events-none" />
+          <div className="absolute top-1/2 left-6 right-6 h-0.5 bg-[#8B5CF6] animate-[pulse_1.5s_ease-in-out_infinite] shadow-[0_0_10px_#8B5CF6] z-20 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 p-4 flex items-center z-30 bg-gradient-to-b from-black/60 to-transparent">
             <button
               onClick={() => setIsCameraActive(false)}
               className="text-white p-2 rounded-full hover:bg-white/20 transition-colors"
             >
-              <ArrowLeft className="w-8 h-8" />
+              <ArrowLeft className="w-6 h-6" />
             </button>
-            <span className="text-white font-medium">Ler Código de Barras</span>
-            <div className="w-8" />
+            <span className="text-white font-medium ml-2">Ler código de barras</span>
           </div>
-
-          <p className="absolute bottom-12 text-white text-sm z-30 bg-black/60 px-5 py-3 rounded-full backdrop-blur-md font-medium shadow-xl pointer-events-none">
+          <p className="absolute bottom-10 text-white text-sm z-30 bg-black/60 px-4 py-2 rounded-full font-medium pointer-events-none">
             Alinhe o código na marcação
           </p>
         </div>
@@ -210,60 +185,56 @@ export default function BoletoPage() {
   const total = boletoInfo ? boletoInfo.valor + taxaTotal : 0
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-20 animate-in fade-in duration-300">
-      <header className="bg-[#8B5CF6] text-white p-4 sticky top-0 z-10 flex items-center shadow-md">
+    <div className="min-h-screen bg-white flex flex-col font-sans pb-20">
+      <header className="bg-[#8B5CF6] text-white p-4 sticky top-0 z-10 flex items-center shadow-sm">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 mr-2 hover:bg-white/20 rounded-full transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-lg font-semibold tracking-tight">Pagar Boleto</h1>
+        <h1 className="text-lg font-medium tracking-tight">Pagar Boleto</h1>
       </header>
 
-      <main className="flex-1 p-4 md:max-w-md md:mx-auto w-full">
+      <main className="flex-1 w-full max-w-md mx-auto">
         {isCameraActive && <CameraView />}
 
         {!boletoInfo && (
-          <div className="animate-in slide-in-from-bottom-4 duration-500">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
-              <TabsList className="grid w-full grid-cols-2 bg-white border border-slate-200 rounded-xl p-1 h-12 shadow-sm">
-                <TabsTrigger
-                  value="digitar"
-                  className="rounded-lg data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white transition-all font-medium text-slate-600"
-                >
-                  Digitar código
-                </TabsTrigger>
-                <TabsTrigger
-                  value="ler"
-                  className="rounded-lg data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white transition-all font-medium text-slate-600"
-                >
-                  Ler código
-                </TabsTrigger>
-              </TabsList>
+          <div className="animate-in fade-in duration-500">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="px-3 pt-3">
+                <TabsList className="flex w-full bg-transparent border-b border-slate-200 p-0 h-auto rounded-none">
+                  <TabsTrigger
+                    value="digitar"
+                    className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-[#8B5CF6] data-[state=active]:text-[#8B5CF6] data-[state=active]:bg-transparent text-slate-500 font-medium py-3 px-3 transition-colors data-[state=active]:shadow-none"
+                  >
+                    Digitar código
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ler"
+                    className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-[#8B5CF6] data-[state=active]:text-[#8B5CF6] data-[state=active]:bg-transparent text-slate-500 font-medium py-3 px-3 transition-colors data-[state=active]:shadow-none"
+                  >
+                    Ler código
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="digitar" className="mt-6 space-y-6">
+              <TabsContent value="digitar" className="p-4 mt-0 space-y-4 outline-none">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 ml-1">
-                    Código de barras
-                  </label>
-                  <div className="relative">
-                    <Input
-                      placeholder="Digite os 47 dígitos"
-                      value={codigo}
-                      onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
-                      maxLength={47}
-                      className="h-14 pl-12 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-[#8B5CF6] text-lg tracking-wide"
-                    />
-                    <BarcodeIcon className="absolute left-4 top-4 w-6 h-6 text-slate-400" />
-                  </div>
-                  <div className="flex justify-between items-center px-1">
-                    <p className="text-xs text-slate-500">{codigo.length}/47 dígitos</p>
+                  <Input
+                    placeholder="Código de barras (47 dígitos)"
+                    value={codigo}
+                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
+                    maxLength={47}
+                    className="h-12 p-3 rounded-xl border-slate-300 focus-visible:ring-[#8B5CF6] bg-white text-base shadow-sm"
+                  />
+                  <div className="flex justify-end">
+                    <p className="text-xs text-slate-500">{codigo.length}/47</p>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2 animate-in fade-in">
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     {error}
                   </div>
@@ -272,24 +243,26 @@ export default function BoletoPage() {
                 <Button
                   onClick={() => buscarBoleto(codigo)}
                   disabled={codigo.length < 47 || loading}
-                  className="w-full h-14 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl font-medium text-base shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+                  className="w-full mt-5 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl h-12 font-medium disabled:bg-slate-200 disabled:text-slate-400 transition-all"
                 >
                   {loading ? 'Buscando...' : 'Buscar boleto'}
                 </Button>
               </TabsContent>
 
-              <TabsContent value="ler" className="mt-6">
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-sm">
-                  <div className="w-20 h-20 bg-[#8B5CF6]/10 rounded-full flex items-center justify-center mb-5 text-[#8B5CF6]">
+              <TabsContent value="ler" className="p-4 mt-0 outline-none">
+                <div className="flex flex-col items-center justify-center text-center mt-8 space-y-4">
+                  <div className="w-20 h-20 bg-[#8B5CF6]/10 rounded-full flex items-center justify-center text-[#8B5CF6] animate-pulse">
                     <Camera className="w-10 h-10" />
                   </div>
-                  <h3 className="font-semibold text-slate-800 text-lg mb-2">Aponte a câmera</h3>
-                  <p className="text-slate-500 text-sm mb-8 max-w-[250px] leading-relaxed">
-                    Posicione o código de barras na marcação da tela para leitura automática.
-                  </p>
+                  <div>
+                    <h3 className="font-medium text-slate-800 text-lg mb-1">Aponte a câmera</h3>
+                    <p className="text-slate-500 text-sm max-w-[240px] mx-auto leading-relaxed">
+                      Posicione o código de barras na tela para leitura automática.
+                    </p>
+                  </div>
                   <Button
                     onClick={() => setIsCameraActive(true)}
-                    className="w-full h-14 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl shadow-sm transition-all text-base font-medium active:scale-[0.98]"
+                    className="w-full mt-5 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl h-12 font-medium transition-all"
                   >
                     Abrir câmera
                   </Button>
@@ -300,118 +273,98 @@ export default function BoletoPage() {
         )}
 
         {loading && !isCameraActive && !boletoInfo && (
-          <div className="mt-8 space-y-4 animate-in fade-in">
-            <Skeleton className="h-40 w-full rounded-2xl bg-slate-200/60" />
-            <Skeleton className="h-14 w-full rounded-xl bg-slate-200/60" />
+          <div className="p-4 space-y-4 animate-in fade-in">
+            <Skeleton className="h-32 w-full rounded-xl bg-slate-100" />
+            <Skeleton className="h-12 w-full rounded-xl bg-slate-100" />
           </div>
         )}
 
         {boletoInfo && (
-          <div className="mt-4 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-white ring-1 ring-slate-100">
-              <div className="bg-[#8B5CF6]/10 px-5 py-4 flex items-center gap-3 border-b border-[#8B5CF6]/10">
-                <CheckCircle2 className="w-6 h-6 text-[#8B5CF6]" />
-                <h2 className="font-semibold text-[#8B5CF6]">Boleto encontrado</h2>
+          <div className="p-4 space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-2 mb-2 text-[#8B5CF6]">
+              <CheckCircle2 className="w-5 h-5" />
+              <h2 className="font-medium">Boleto encontrado</h2>
+            </div>
+
+            <div className="bg-slate-50 rounded-[12px] p-4 space-y-4 border border-slate-100">
+              <div>
+                <p className="text-sm text-slate-500 mb-1">Beneficiário</p>
+                <p className="font-medium text-slate-800 text-lg">{boletoInfo.beneficiario}</p>
               </div>
-              <CardContent className="p-5 space-y-5">
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Beneficiário</p>
-                  <p className="font-semibold text-slate-800 text-lg leading-tight">
-                    {boletoInfo.beneficiario}
+                  <p className="text-sm text-slate-500 mb-1">Vencimento</p>
+                  <p className="font-medium text-slate-800">
+                    {new Date(boletoInfo.vencimento).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">Vencimento</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(boletoInfo.vencimento).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">Valor do boleto</p>
-                    <p className="font-medium text-slate-800">
-                      {boletoInfo.valor.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Valor</p>
+                  <p className="font-medium text-slate-800">
+                    {boletoInfo.valor.toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="border border-slate-200 shadow-sm rounded-2xl bg-white">
-              <CardContent className="p-5 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Valor do documento</span>
-                    <span className="font-medium text-slate-800">
-                      {boletoInfo.valor.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Taxa de serviço</span>
-                    <span className="font-medium text-amber-600">
-                      {taxaTotal > 0
-                        ? '+ ' +
-                          taxaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                        : 'Isento'}
-                    </span>
-                  </div>
-                  <div className="h-px bg-slate-100 my-1" />
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-slate-800">Total a pagar</span>
-                    <span className="text-xl font-bold text-[#8B5CF6]">
-                      {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </span>
-                  </div>
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Taxa de serviço</span>
+                  <span className="bg-[#8B5CF6] text-white text-xs px-2 py-1 rounded-full font-medium">
+                    {taxaTotal > 0
+                      ? '+ ' +
+                        taxaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                      : 'Isento'}
+                  </span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-slate-800">Total a pagar</span>
+                  <span className="text-lg font-bold text-[#8B5CF6]">
+                    {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                <div className="pt-4 border-t border-slate-100">
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">
-                    Confirmar pagamento
-                  </label>
-                  <Input
-                    type="password"
-                    placeholder="Digite sua senha"
-                    value={senha}
-                    onChange={(e) => setSenha(e.target.value)}
-                    className="h-12 rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-[#8B5CF6]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="pt-2">
+              <Input
+                type="password"
+                placeholder="Senha de confirmação"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className="h-12 p-3 rounded-xl border-slate-300 focus-visible:ring-[#8B5CF6]"
+              />
+            </div>
 
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm flex items-start gap-3 animate-in fade-in">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col gap-3 mt-5">
               <Button
-                variant="outline"
+                onClick={handlePagar}
+                disabled={processing || !senha}
+                className="w-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl h-12 font-medium disabled:bg-slate-200 disabled:text-slate-400 transition-all"
+              >
+                {processing ? 'Processando...' : 'Confirmar e pagar'}
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setBoletoInfo(null)
                   setCodigo('')
                   setSenha('')
                 }}
                 disabled={processing}
-                className="flex-1 h-14 rounded-xl text-slate-600 border-slate-200 hover:bg-slate-50 font-medium bg-white"
+                className="w-full text-slate-500 hover:text-slate-700 h-12 font-medium"
               >
                 Cancelar
-              </Button>
-              <Button
-                onClick={handlePagar}
-                disabled={processing}
-                className="flex-[2] h-14 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl font-medium shadow-sm transition-all active:scale-[0.98]"
-              >
-                {processing ? 'Processando...' : 'Pagar'}
               </Button>
             </div>
           </div>

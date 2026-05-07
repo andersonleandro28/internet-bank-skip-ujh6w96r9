@@ -7,7 +7,7 @@ export function MobileNav() {
 
   const navItems = [
     { icon: FileText, label: 'Extrato', path: '/extrato' },
-    { icon: Barcode, label: 'Boleto', path: '/boleto' },
+    { icon: Barcode, label: 'Boleto', path: '/pagar-boleto' },
     { icon: Coins, label: 'Carregar', path: '/carregar' },
     { icon: ArrowLeftRight, label: 'Transferir', path: '/transferir' },
     { icon: User, label: 'Perfil', path: '/perfil' },
