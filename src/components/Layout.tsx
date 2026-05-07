@@ -33,7 +33,7 @@ const menuItems = [
   { icon: ArrowLeftRight, label: 'Transferências & PIX', path: '/transferir' },
   { icon: Wallet, label: 'Pagamentos', path: '/pagar-boleto' },
   { icon: CreditCard, label: 'Cartões', path: '/carregar' },
-  { icon: Settings, label: 'Configurações', path: '#' },
+  { icon: Settings, label: 'Configurações', path: '/admin/configuracoes-taxas' },
 ]
 
 export default function Layout() {

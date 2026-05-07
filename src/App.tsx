@@ -13,6 +13,7 @@ import Carregar from './pages/Carregar'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import NotFound from './pages/NotFound'
+import ConfiguracoesTaxas from './pages/admin/ConfiguracoesTaxas'
 
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/transferir" element={<Transfer />} />
               <Route path="/pagar-boleto" element={<Boleto />} />
               <Route path="/carregar" element={<Carregar />} />
+              <Route path="/admin/configuracoes-taxas" element={<ConfiguracoesTaxas />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
