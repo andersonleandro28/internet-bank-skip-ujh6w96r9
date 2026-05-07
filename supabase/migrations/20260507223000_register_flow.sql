@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
-AS $function$
+AS $$
 BEGIN
   INSERT INTO public.usuarios (id, email, role, status, tipo)
   VALUES (
@@ -32,7 +32,7 @@ BEGIN
   
   RETURN NEW;
 END;
-$function$
+$$;
 
 -- Storage for uploads
 INSERT INTO storage.buckets (id, name, public) 
