@@ -14,27 +14,27 @@ export function MobileNav() {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:hidden">
-      <div className="flex justify-around items-center h-16 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 h-[80px] p-3 md:hidden">
+      <div className="flex justify-between items-center h-full max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path
           return (
             <Link
               key={item.label}
               to={item.path}
-              className={cn(
-                'flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors relative',
-                isActive ? 'text-primary' : 'text-slate-400 hover:text-slate-600',
-              )}
+              className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors"
             >
-              {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-b-md" />
-              )}
-              <item.icon
-                className={cn('w-6 h-6 mb-1', isActive && 'text-primary')}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <div className="text-primary transition-transform active:scale-95">
+                <item.icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
+              </div>
+              <span
+                className={cn(
+                  'text-[11px] font-medium transition-colors',
+                  isActive ? 'text-slate-800' : 'text-slate-500',
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           )
         })}

@@ -454,7 +454,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       role_usuario: 'cliente' | 'admin'
@@ -778,7 +778,7 @@ export const Constants = {
 //   Policy "usuarios_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
 //   Policy "usuarios_select" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: ((id = auth.uid()) OR (( SELECT usuarios_1.role    FROM usuarios usuarios_1   WHERE (usuarios_1.id = auth.uid())) = 'admin'::role_usuario))
+//     USING: ((id = auth.uid()) OR is_admin())
 //   Policy "usuarios_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (id = auth.uid())
 // Table: usuarios_pf
@@ -821,6 +821,21 @@ export const Constants = {
 //     ON CONFLICT (user_id) DO NOTHING;
 //
 //     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION is_admin()
+//   CREATE OR REPLACE FUNCTION public.is_admin()
+//    RETURNS boolean
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     RETURN EXISTS (
+//       SELECT 1
+//       FROM public.usuarios
+//       WHERE id = auth.uid() AND role = 'admin'
+//     );
 //   END;
 //   $function$
 //
