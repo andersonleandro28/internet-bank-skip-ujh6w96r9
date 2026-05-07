@@ -8,6 +8,7 @@ import Layout from './components/Layout'
 import Index from './pages/Index'
 import Extrato from './pages/Extrato'
 import Transfer from './pages/Transfer'
+import Boleto from './pages/Boleto'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import NotFound from './pages/NotFound'
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/extrato" element={<Extrato />} />
               <Route path="/transferir" element={<Transfer />} />
+              <Route path="/pagar-boleto" element={<Boleto />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
