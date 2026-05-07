@@ -778,15 +778,15 @@ export const Constants = {
 //   Policy "usuarios_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (id = auth.uid())
 // Table: usuarios_pf
-//   Policy "usuarios_pf_insert" (INSERT, PERMISSIVE) roles={authenticated}
-//     WITH CHECK: (user_id = auth.uid())
+//   Policy "usuarios_pf_insert" (INSERT, PERMISSIVE) roles={public}
+//     WITH CHECK: true
 //   Policy "usuarios_pf_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 //   Policy "usuarios_pf_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 // Table: usuarios_pj
-//   Policy "usuarios_pj_insert" (INSERT, PERMISSIVE) roles={authenticated}
-//     WITH CHECK: (user_id = auth.uid())
+//   Policy "usuarios_pj_insert" (INSERT, PERMISSIVE) roles={public}
+//     WITH CHECK: true
 //   Policy "usuarios_pj_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 //   Policy "usuarios_pj_update" (UPDATE, PERMISSIVE) roles={authenticated}

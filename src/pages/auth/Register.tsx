@@ -158,6 +158,31 @@ export default function Register() {
       if (!data?.user) throw new Error('Erro ao criar usuário')
 
       const userId = data.user.id
+
+      // Sincronização defensiva: garante que as tabelas base existem.
+      // Se o ID for de um usuário falso (e-mail já existe), isso falhará com 23503 (FK violation em auth.users).
+      const { error: userError } = await supabase.from('usuarios').insert({
+        id: userId,
+        email: email,
+        tipo: tipo as 'PF' | 'PJ',
+        status: 'pendente',
+        role: 'cliente',
+      })
+
+      if (userError) {
+        if (userError.code === '23503') {
+          throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
+        }
+        if (userError.code !== '23505') throw userError // 23505 = já existe (ok)
+      }
+
+      const { error: contaError } = await supabase.from('contas').insert({
+        user_id: userId,
+        saldo: 0,
+        saldo_bloqueado: 0,
+      })
+      if (contaError && contaError.code !== '23505') throw contaError
+
       let fileUrl = ''
 
       if (tipo === 'PF') {
@@ -170,7 +195,11 @@ export default function Register() {
           data_nascimento: dataNascimento || null,
           selfie_url: fileUrl,
         })
-        if (pfError) throw pfError
+        if (pfError) {
+          if (pfError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
+          if (pfError.code === '23505') throw new Error('Este CPF já está em uso.')
+          throw pfError
+        }
       } else if (tipo === 'PJ') {
         if (documentos) fileUrl = await uploadFile(documentos, userId)
 
@@ -180,7 +209,11 @@ export default function Register() {
           razao_social: razaoSocial,
           documentos_url: fileUrl,
         })
-        if (pjError) throw pjError
+        if (pjError) {
+          if (pjError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
+          if (pjError.code === '23505') throw new Error('Este CNPJ já está em uso.')
+          throw pjError
+        }
       }
 
       setSuccess(true)
