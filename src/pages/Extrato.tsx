@@ -126,52 +126,54 @@ export default function Extrato() {
   const paginatedData = filteredData.slice(0, page * ITEMS_PER_PAGE)
   const hasMore = paginatedData.length < filteredData.length
 
-  const getStatusColor = (tx: Transaction) => {
-    if (tx.source === 'deposito') return 'text-blue-600 bg-blue-50 border-blue-100'
+  const getStatusStyles = (tx: Transaction) => {
+    if (tx.source === 'deposito')
+      return { border: 'border-l-blue-500', badge: 'bg-blue-500 text-white' }
     if (tx.status === 'aprovado' || tx.status === 'concluido')
-      return 'text-emerald-600 bg-emerald-50 border-emerald-100'
-    if (tx.status === 'pendente') return 'text-amber-600 bg-amber-50 border-amber-100'
+      return { border: 'border-l-emerald-500', badge: 'bg-emerald-500 text-white' }
+    if (tx.status === 'pendente')
+      return { border: 'border-l-amber-500', badge: 'bg-amber-500 text-white' }
     if (tx.status === 'reprovado' || tx.status === 'cancelado')
-      return 'text-red-600 bg-red-50 border-red-100'
-    return 'text-slate-600 bg-slate-50 border-slate-100'
+      return { border: 'border-l-red-500', badge: 'bg-red-500 text-white' }
+    return { border: 'border-l-slate-400', badge: 'bg-slate-500 text-white' }
   }
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] bg-slate-50 pb-24 font-sans animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4 p-4 bg-white border-b border-slate-100 sticky top-0 z-10">
+      <div className="flex items-center gap-4 p-4 bg-[#8B5CF6] text-white sticky top-0 z-20 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
           asChild
-          className="text-slate-500 hover:text-slate-900 -ml-2"
+          className="text-white hover:bg-white/10 hover:text-white -ml-2 rounded-full"
         >
           <Link to="/">
             <ArrowLeft className="w-6 h-6" />
           </Link>
         </Button>
-        <h1 className="text-xl font-semibold text-slate-800">Extrato</h1>
+        <h1 className="text-xl font-semibold">Extrato</h1>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white px-4 py-3 border-b border-slate-100 sticky top-[73px] z-10 shadow-sm">
+      <div className="bg-white px-3 py-3 border-b border-slate-100 sticky top-[68px] z-10 shadow-sm">
         <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
           {TIPOS.map((tipo) => (
             <button
               key={tipo}
               onClick={() => setTipoFiltro(tipo)}
               className={cn(
-                'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
                 tipoFiltro === tipo
-                  ? 'bg-[#8B5CF6] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
               )}
             >
               {tipo}
             </button>
           ))}
         </div>
-        <div className="flex gap-2 overflow-x-auto mt-2 pb-1 hide-scrollbar">
+        <div className="flex gap-2 overflow-x-auto mt-1 pb-1 hide-scrollbar">
           {PERIODOS.map((per) => (
             <button
               key={per.days}
@@ -179,8 +181,8 @@ export default function Extrato() {
               className={cn(
                 'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
                 periodoFiltro === per.days
-                  ? 'border-[#8B5CF6] text-[#8B5CF6] bg-purple-50'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50',
+                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
               )}
             >
               {per.label}
@@ -190,16 +192,16 @@ export default function Extrato() {
       </div>
 
       {/* Conteúdo */}
-      <div className="p-4">
+      <div className="px-3 py-4">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center"
+                className="bg-white p-4 rounded-2xl border-l-4 border-slate-200 shadow-subtle flex justify-between items-center"
               >
                 <div className="flex gap-3 items-center">
-                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <Skeleton className="w-12 h-12 rounded-full" />
                   <div className="space-y-2">
                     <Skeleton className="w-24 h-4" />
                     <Skeleton className="w-16 h-3" />
@@ -207,7 +209,7 @@ export default function Extrato() {
                 </div>
                 <div className="space-y-2 items-end flex flex-col">
                   <Skeleton className="w-20 h-4" />
-                  <Skeleton className="w-12 h-3" />
+                  <Skeleton className="w-12 h-4 rounded" />
                 </div>
               </div>
             ))}
@@ -232,70 +234,69 @@ export default function Extrato() {
             <p className="text-slate-400 text-sm mt-1">Tente alterar os filtros acima.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+          <div className="space-y-4">
             {paginatedData.map((tx) => (
-              <Collapsible key={tx.id} className="border-b border-slate-100 last:border-0 group">
-                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <Collapsible
+                key={tx.id}
+                className={cn(
+                  'bg-white rounded-2xl shadow-subtle border-l-4 overflow-hidden group',
+                  getStatusStyles(tx).border,
+                )}
+              >
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div
                       className={cn(
-                        'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                        tx.source === 'deposito'
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-purple-100 text-[#8B5CF6]',
+                        'w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-slate-50/80',
+                        tx.source === 'deposito' ? 'text-blue-500' : 'text-[#8B5CF6]',
                       )}
                     >
                       {tx.source === 'deposito' ? (
-                        <ArrowDownRight className="w-5 h-5" />
+                        <ArrowDownRight className="w-6 h-6" />
                       ) : (
-                        <ArrowUpRight className="w-5 h-5" />
+                        <ArrowUpRight className="w-6 h-6" />
                       )}
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-slate-800 capitalize">{tx.tipo}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{formatDate(tx.created_at)}</p>
+                      <p className="text-base font-semibold text-slate-800 capitalize">{tx.tipo}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <span
-                      className={cn(
-                        'text-sm font-bold',
-                        tx.source === 'deposito' ? 'text-blue-600' : 'text-slate-800',
-                      )}
-                    >
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-base font-bold text-slate-800">
                       {tx.source === 'deposito' ? '+' : '-'}
                       {formatCurrency(tx.valor_total)}
                     </span>
                     <span
                       className={cn(
-                        'text-[10px] px-2 py-0.5 rounded-full font-medium capitalize border',
-                        getStatusColor(tx),
+                        'text-[11px] px-2 py-0.5 rounded font-medium capitalize',
+                        getStatusStyles(tx).badge,
                       )}
                     >
                       {tx.status}
                     </span>
                   </div>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="px-4 pb-4 pt-1 bg-slate-50/50 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
-                  <div className="space-y-2.5 text-sm mt-2">
-                    <div className="flex justify-between border-b border-slate-100 pb-2.5">
+                <CollapsibleContent className="px-4 pb-4 pt-0 bg-white data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+                  <div className="space-y-3 text-sm mt-2 pt-4 border-t border-slate-100">
+                    <div className="flex justify-between">
                       <span className="text-slate-500">Valor original</span>
                       <span className="text-slate-800 font-medium">{formatCurrency(tx.valor)}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex justify-between">
                       <span className="text-slate-500">Taxa aplicada</span>
                       <span className="text-slate-800 font-medium">
                         {formatCurrency(tx.taxa_aplicada)}
                       </span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex justify-between">
                       <span className="text-slate-500">Valor total</span>
                       <span className="text-slate-800 font-medium">
                         {formatCurrency(tx.valor_total)}
                       </span>
                     </div>
-                    <div className="flex justify-between pb-1 pt-1">
-                      <span className="text-slate-500">ID da transação</span>
+                    <div className="flex justify-between pt-2 mt-1 border-t border-slate-50">
+                      <span className="text-slate-400">ID da transação</span>
                       <span
                         className="text-slate-400 font-mono text-xs truncate max-w-[150px]"
                         title={tx.id}
@@ -311,11 +312,11 @@ export default function Extrato() {
         )}
 
         {hasMore && !loading && !error && (
-          <div className="mt-6 flex justify-center">
+          <div className="mt-5 mb-2">
             <Button
               variant="outline"
               onClick={() => setPage((p) => p + 1)}
-              className="rounded-full text-[#8B5CF6] border-[#8B5CF6] hover:bg-purple-50 px-8"
+              className="w-full rounded-full text-[#8B5CF6] border-[#8B5CF6] hover:bg-purple-50 hover:text-[#8B5CF6] py-6 text-base font-medium transition-colors"
             >
               Carregar mais
             </Button>
