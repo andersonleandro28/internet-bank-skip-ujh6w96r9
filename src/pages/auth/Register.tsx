@@ -13,17 +13,88 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 import { maskCpf, maskCnpj } from '@/lib/format'
-import { User, Building2, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { User, Building2, CheckCircle2, ArrowLeft, Camera } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 type TipoConta = 'PF' | 'PJ' | null
+
+const Confetti = () => {
+  const colors = ['bg-purple-500', 'bg-blue-500', 'bg-pink-500', 'bg-yellow-500', 'bg-green-500']
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+      {[...Array(60)].map((_, i) => {
+        const style = {
+          left: `${Math.random() * 100}vw`,
+          animationDelay: `${Math.random() * 0.5}s`,
+          animationDuration: `${1.5 + Math.random() * 2}s`,
+        }
+        return (
+          <div
+            key={i}
+            className={cn(
+              'absolute top-[-5vh] w-2 h-3 rounded-sm animate-confetti',
+              colors[i % colors.length],
+            )}
+            style={style}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+const FileUpload = ({
+  label,
+  accept,
+  onChange,
+  file,
+  id,
+}: {
+  label: string
+  accept: string
+  onChange: (e: any) => void
+  file: File | null
+  id: string
+}) => (
+  <div className="space-y-2">
+    <Label htmlFor={id} className="text-slate-600 font-medium">
+      {label}
+    </Label>
+    <div className="relative border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer group bg-slate-50/50">
+      {file ? (
+        <>
+          <CheckCircle2 className="w-8 h-8 text-primary mb-2" />
+          <span className="text-sm font-medium text-primary">{file.name}</span>
+          <span className="text-xs text-muted-foreground mt-1">Clique para trocar de arquivo</span>
+        </>
+      ) : (
+        <>
+          <Camera className="w-8 h-8 text-slate-400 mb-2 group-hover:text-primary transition-colors" />
+          <span className="text-sm text-slate-600 font-medium">Clique para enviar ou arraste</span>
+          <span className="text-xs text-slate-400 mt-1">PNG, JPG ou PDF (máx. 5MB)</span>
+        </>
+      )}
+      <Input
+        id={id}
+        type="file"
+        accept={accept}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        onChange={onChange}
+        required
+      />
+    </div>
+  </div>
+)
 
 export default function Register() {
   const navigate = useNavigate()
   const { signUp } = useAuth()
 
   const [tipo, setTipo] = useState<TipoConta>(null)
+  const [isFading, setIsFading] = useState(false)
 
   // Generic fields
   const [email, setEmail] = useState('')
@@ -43,6 +114,14 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [success, setSuccess] = useState(false)
+
+  const handleTipoSelect = (novoTipo: TipoConta) => {
+    setIsFading(true)
+    setTimeout(() => {
+      setTipo(novoTipo)
+      setIsFading(false)
+    }, 150)
+  }
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -105,6 +184,10 @@ export default function Register() {
       }
 
       setSuccess(true)
+      toast.success('Cadastro enviado com sucesso!', {
+        style: { background: '#22c55e', color: '#fff', border: 'none' },
+        icon: <CheckCircle2 className="w-5 h-5 text-white" />,
+      })
     } catch (err: any) {
       console.error(err)
       setErrorMsg(err.message || 'Ocorreu um erro inesperado')
@@ -113,62 +196,102 @@ export default function Register() {
     }
   }
 
+  // SUCCESS STATE
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white p-5">
+        <Confetti />
+        <Card className="w-full max-w-md border-none shadow-[0_4px_24px_rgba(0,0,0,0.04)] animate-in fade-in zoom-in duration-500 text-center py-10 px-5 rounded-[16px]">
+          <CardContent className="flex flex-col items-center gap-5 p-0">
+            <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-2 animate-bounce">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">
+              Cadastro recebido!
+            </h2>
+            <p className="text-slate-500 text-base leading-relaxed">
+              Aguardando aprovação do administrador. Você receberá um e-mail assim que sua conta for
+              ativada.
+            </p>
+            <Button
+              className="mt-8 w-full h-14 text-base font-medium rounded-xl"
+              onClick={() => navigate('/login')}
+            >
+              Voltar para o Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   // EMPTY STATE (Type Selection)
   if (!tipo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-          <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="w-full max-w-lg animate-fade-in-up">
-          <div className="flex justify-center mb-8">
-            <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-primary">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xl">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-5 relative">
+        <div
+          className={cn(
+            'w-full max-w-md transition-opacity duration-300',
+            isFading ? 'opacity-0' : 'opacity-100 animate-in fade-in duration-500',
+          )}
+        >
+          <div className="flex justify-center mb-10">
+            <Link
+              to="/"
+              className="flex items-center gap-2 font-bold text-3xl text-slate-800 tracking-tight"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white text-xl">
                 N
               </div>
               NovaBank
             </Link>
           </div>
 
-          <Card className="border-none shadow-elevation">
-            <CardHeader className="text-center pb-6">
-              <CardTitle className="text-2xl font-bold tracking-tight">Abra sua conta</CardTitle>
-              <CardDescription>Escolha o tipo de conta que deseja abrir</CardDescription>
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="text-center pb-8 px-0">
+              <CardTitle className="text-2xl font-semibold tracking-tight text-slate-800">
+                Abra sua conta
+              </CardTitle>
+              <CardDescription className="text-base text-slate-500 mt-2">
+                Escolha o tipo de conta para começar
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-0">
               <button
-                onClick={() => setTipo('PF')}
-                className="w-full flex items-center p-4 border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
+                onClick={() => handleTipoSelect('PF')}
+                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all duration-300 group bg-white"
               >
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors mr-4">
-                  <User className="w-6 h-6" />
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors mr-5 shrink-0">
+                  <User className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-base">Pessoa Física</h3>
-                  <p className="text-sm text-muted-foreground">Para você (CPF)</p>
+                  <h3 className="font-semibold text-lg text-slate-800 group-hover:text-primary transition-colors">
+                    Pessoa Física
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-0.5">Para você (CPF)</p>
                 </div>
               </button>
 
               <button
-                onClick={() => setTipo('PJ')}
-                className="w-full flex items-center p-4 border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
+                onClick={() => handleTipoSelect('PJ')}
+                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all duration-300 group bg-white"
               >
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors mr-4">
-                  <Building2 className="w-6 h-6" />
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors mr-5 shrink-0">
+                  <Building2 className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-base">Pessoa Jurídica</h3>
-                  <p className="text-sm text-muted-foreground">Para sua empresa (CNPJ)</p>
+                  <h3 className="font-semibold text-lg text-slate-800 group-hover:text-primary transition-colors">
+                    Pessoa Jurídica
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-0.5">Para sua empresa (CNPJ)</p>
                 </div>
               </button>
             </CardContent>
-            <CardFooter className="justify-center border-t pt-6">
-              <div className="text-sm text-muted-foreground">
-                Já possui conta?{' '}
+            <CardFooter className="justify-center pt-8 px-0">
+              <div className="text-base text-slate-500">
+                Já tem uma conta?{' '}
                 <Link to="/login" className="font-semibold text-primary hover:underline">
-                  Fazer login
+                  Faça login
                 </Link>
               </div>
             </CardFooter>
@@ -178,65 +301,46 @@ export default function Register() {
     )
   }
 
-  // SUCCESS STATE
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="w-full max-w-md border-none shadow-elevation animate-fade-in-up text-center py-8">
-          <CardContent className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800">Cadastro recebido!</h2>
-            <p className="text-muted-foreground">
-              Aguardando aprovação do administrador. Você receberá um e-mail assim que sua conta for
-              ativada.
-            </p>
-            <Button className="mt-6 w-full" onClick={() => navigate('/login')}>
-              Ir para o Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   // FORM STATE
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 py-12 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="w-full max-w-xl animate-fade-in-up">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50/50 p-5 py-12">
+      <div
+        className={cn(
+          'w-full max-w-xl transition-opacity duration-300',
+          isFading
+            ? 'opacity-0'
+            : 'opacity-100 animate-in fade-in slide-in-from-bottom-4 duration-500',
+        )}
+      >
         <Button
           variant="ghost"
-          onClick={() => setTipo(null)}
-          className="mb-6 text-muted-foreground hover:text-foreground"
+          onClick={() => handleTipoSelect(null)}
+          className="mb-6 text-slate-500 hover:text-slate-800 hover:bg-slate-100 -ml-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           Voltar
         </Button>
 
-        <Card className="border-none shadow-elevation">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold tracking-tight">
+        <Card className="border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.04)] rounded-[16px] bg-white">
+          <CardHeader className="space-y-2 pb-6 pt-8 px-6 sm:px-8">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-slate-800">
               Cadastro {tipo === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}
             </CardTitle>
-            <CardDescription>Preencha os dados abaixo para enviar para aprovação</CardDescription>
+            <CardDescription className="text-base text-slate-500">
+              Preencha os dados abaixo para solicitar sua conta
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleRegister}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 px-6 sm:px-8 pb-8">
               {errorMsg && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex flex-col gap-2">
-                  <span>{errorMsg}</span>
+                <div className="bg-red-50/80 text-red-600 p-4 rounded-xl text-sm flex flex-col gap-3 border border-red-100 animate-in fade-in zoom-in-95">
+                  <span className="font-medium">{errorMsg}</span>
                   <Button
                     variant="outline"
                     size="sm"
                     type="button"
                     onClick={() => setErrorMsg('')}
-                    className="w-fit"
+                    className="w-fit bg-white hover:bg-red-50 border-red-200 text-red-700"
                   >
                     Tentar novamente
                   </Button>
@@ -244,139 +348,160 @@ export default function Register() {
               )}
 
               {loading && !errorMsg ? (
-                <div className="space-y-4 animate-pulse">
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <Skeleton className="h-24 w-full rounded-lg" />
+                <div className="space-y-5 animate-pulse">
+                  <Skeleton className="h-[72px] w-full rounded-xl bg-slate-100" />
+                  <Skeleton className="h-[72px] w-full rounded-xl bg-slate-100" />
+                  <Skeleton className="h-[72px] w-full rounded-xl bg-slate-100" />
+                  <Skeleton className="h-[120px] w-full rounded-xl bg-slate-100" />
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-8">
                   {/* Dados de Acesso */}
-                  <div className="space-y-4 p-4 bg-slate-50 rounded-xl border">
-                    <h3 className="font-medium text-sm text-slate-500 uppercase">
+                  <div className="space-y-5">
+                    <h3 className="font-semibold text-sm text-slate-400 uppercase tracking-wider">
                       Dados de Acesso
                     </h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-mail</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Crie uma senha forte"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-slate-600">
+                          E-mail
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="seu@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password" className="text-slate-600">
+                          Senha
+                        </Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="Crie uma senha forte"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                          required
+                          minLength={6}
+                        />
+                      </div>
                     </div>
                   </div>
 
+                  <div className="h-px w-full bg-slate-100" />
+
                   {/* Dados Específicos */}
-                  <div className="space-y-4 p-4 bg-slate-50 rounded-xl border">
-                    <h3 className="font-medium text-sm text-slate-500 uppercase">
+                  <div className="space-y-5">
+                    <h3 className="font-semibold text-sm text-slate-400 uppercase tracking-wider">
                       Dados {tipo === 'PF' ? 'Pessoais' : 'da Empresa'}
                     </h3>
 
                     {tipo === 'PF' ? (
-                      <>
+                      <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="nome">Nome Completo</Label>
+                          <Label htmlFor="nome" className="text-slate-600">
+                            Nome Completo
+                          </Label>
                           <Input
                             id="nome"
                             placeholder="João da Silva"
                             value={nome}
                             onChange={(e) => setNome(e.target.value)}
+                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
                             required
                           />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="cpf">CPF</Label>
+                            <Label htmlFor="cpf" className="text-slate-600">
+                              CPF
+                            </Label>
                             <Input
                               id="cpf"
                               placeholder="000.000.000-00"
                               value={cpf}
                               onChange={(e) => setCpf(maskCpf(e.target.value))}
+                              className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
                               required
                               maxLength={14}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+                            <Label htmlFor="dataNascimento" className="text-slate-600">
+                              Data de Nascimento
+                            </Label>
                             <Input
                               id="dataNascimento"
                               type="date"
                               value={dataNascimento}
                               onChange={(e) => setDataNascimento(e.target.value)}
+                              className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
                               required
                             />
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="selfie">Selfie (Foto do rosto)</Label>
-                          <Input
-                            id="selfie"
-                            type="file"
-                            accept="image/*"
-                            className="cursor-pointer file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                            onChange={(e) => handleFileChange(e, setSelfie)}
-                            required
-                          />
-                        </div>
-                      </>
+                        <FileUpload
+                          id="selfie"
+                          label="Selfie (Foto do rosto)"
+                          accept="image/*"
+                          file={selfie}
+                          onChange={(e) => handleFileChange(e, setSelfie)}
+                        />
+                      </div>
                     ) : (
-                      <>
+                      <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="razaoSocial">Razão Social</Label>
+                          <Label htmlFor="razaoSocial" className="text-slate-600">
+                            Razão Social
+                          </Label>
                           <Input
                             id="razaoSocial"
                             placeholder="Sua Empresa LTDA"
                             value={razaoSocial}
                             onChange={(e) => setRazaoSocial(e.target.value)}
+                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="cnpj">CNPJ</Label>
+                          <Label htmlFor="cnpj" className="text-slate-600">
+                            CNPJ
+                          </Label>
                           <Input
                             id="cnpj"
                             placeholder="00.000.000/0000-00"
                             value={cnpj}
                             onChange={(e) => setCnpj(maskCnpj(e.target.value))}
+                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
                             required
                             maxLength={18}
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="documentos">Documentos (Contrato Social, etc)</Label>
-                          <Input
-                            id="documentos"
-                            type="file"
-                            accept=".pdf,image/*"
-                            className="cursor-pointer file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                            onChange={(e) => handleFileChange(e, setDocumentos)}
-                            required
-                          />
-                        </div>
-                      </>
+                        <FileUpload
+                          id="documentos"
+                          label="Documentos (Contrato Social, etc)"
+                          accept=".pdf,image/*"
+                          file={documentos}
+                          onChange={(e) => handleFileChange(e, setDocumentos)}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col pt-4 space-y-4">
-              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+            <CardFooter className="px-6 sm:px-8 pb-8 pt-0">
+              <Button
+                type="submit"
+                className="w-full h-14 text-base font-semibold rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                disabled={loading}
+              >
                 {loading ? 'Enviando...' : 'Enviar para aprovação'}
               </Button>
             </CardFooter>

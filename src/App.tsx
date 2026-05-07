@@ -22,7 +22,7 @@ const App = () => (
       <BankProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="bottom-right" />
           <Routes>
             {/* Auth Routes without main Layout */}
             <Route path="/login" element={<Login />} />

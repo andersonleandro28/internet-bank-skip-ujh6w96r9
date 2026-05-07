@@ -737,6 +737,9 @@ export const Constants = {
 //   FOREIGN KEY usuarios_pj_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 
 // --- ROW LEVEL SECURITY POLICIES ---
+// Table: auditoria
+//   Policy "auditoria_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM usuarios   WHERE ((usuarios.id = auth.uid()) AND (usuarios.role = 'admin'::role_usuario))))
 // Table: cestas_clientes
 //   Policy "cestas_clientes_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
@@ -789,13 +792,6 @@ export const Constants = {
 //   Policy "usuarios_pj_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 
-// --- WARNING: TABLES WITH RLS ENABLED BUT NO POLICIES ---
-// These tables have Row Level Security enabled but NO policies defined.
-// This means ALL queries (SELECT, INSERT, UPDATE, DELETE) will return ZERO rows
-// for non-superuser roles (including the anon and authenticated roles used by the app).
-// You MUST create RLS policies for these tables to allow data access.
-//   - auditoria
-
 // --- DATABASE FUNCTIONS ---
 // FUNCTION handle_new_user()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -804,9 +800,17 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   BEGIN
-//     INSERT INTO public.usuarios (id, email, role, status)
-//     VALUES (NEW.id, NEW.email, 'cliente', 'aprovado')
-//     ON CONFLICT (id) DO NOTHING;
+//     INSERT INTO public.usuarios (id, email, role, status, tipo)
+//     VALUES (
+//       NEW.id,
+//       NEW.email,
+//       'cliente',
+//       'pendente',
+//       COALESCE((NEW.raw_user_meta_data->>'tipo'), 'PF')::public.tipo_usuario
+//     )
+//     ON CONFLICT (id) DO UPDATE SET
+//       status = 'pendente',
+//       tipo = EXCLUDED.tipo;
 //
 //     INSERT INTO public.contas (user_id, saldo, saldo_bloqueado)
 //     VALUES (NEW.id, 0, 0)
