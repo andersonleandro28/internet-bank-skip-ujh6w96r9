@@ -1,251 +1,323 @@
-import { useState } from 'react'
-import { Search, User, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { formatCurrency } from '@/lib/format'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useBank } from '@/hooks/use-bank'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
-
-const frequentContacts = [
-  {
-    id: 1,
-    name: 'Ana Clara Souza',
-    type: 'PIX',
-    key: 'ana.clara@email.com',
-    img: 'https://img.usecurling.com/ppl/thumbnail?gender=female&seed=2',
-  },
-  {
-    id: 2,
-    name: 'Carlos Ferreira',
-    type: 'Conta',
-    key: 'Ag: 0001 Cc: 12345-6',
-    img: 'https://img.usecurling.com/ppl/thumbnail?gender=male&seed=3',
-  },
-]
+import { toast } from 'sonner'
+import { formatCurrency } from '@/lib/format'
 
 export default function Transfer() {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
-  const [recipient, setRecipient] = useState<any>(null)
-  const [amountStr, setAmountStr] = useState('0,00')
-  const [loading, setLoading] = useState(false)
-
-  const { conta, refreshData } = useBank()
+  const navigate = useNavigate()
   const { user } = useAuth()
+  const { conta, refreshData } = useBank()
+
+  const [tab, setTab] = useState<'PIX' | 'TED'>('PIX')
+  const [pixKey, setPixKey] = useState('')
+  const [tedBank, setTedBank] = useState('')
+  const [tedAgency, setTedAgency] = useState('')
+  const [tedAccount, setTedAccount] = useState('')
+  const [name, setName] = useState('')
+  const [amountStr, setAmountStr] = useState('0,00')
+  const [saveFavorite, setSaveFavorite] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [favorites, setFavorites] = useState<any[]>([])
+  const [loadingFavs, setLoadingFavs] = useState(true)
+  const [rates, setRates] = useState<{ PIX: any; TED: any }>({
+    PIX: { p: 0, f: 0 },
+    TED: { p: 0, f: 0 },
+  })
 
   const amount = parseFloat(amountStr.replace(/\./g, '').replace(',', '.')) || 0
+  const rate = rates[tab] || { p: 0, f: 0 }
+  const taxa = amount * (rate.p / 100) + rate.f
+  const total = amount + taxa
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '')
-    if (val === '') val = '0'
-    const num = parseInt(val, 10) / 100
+  useEffect(() => {
+    if (!user) return
+    const fetchData = async () => {
+      const { data: favs } = await supabase
+        .from('favorecidos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('salvo', true)
+      setFavorites(favs || [])
+      setLoadingFavs(false)
+
+      const { data: cesta } = await supabase
+        .from('cestas_clientes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('ativo', true)
+        .single()
+      if (cesta) {
+        const { data: itens } = await supabase
+          .from('cestas_itens')
+          .select('taxa_percentual, taxa_fixa, servicos(nome)')
+          .eq('cesta_id', cesta.id)
+          .eq('ativo', true)
+        const newRates = { PIX: { p: 0, f: 0 }, TED: { p: 0, f: 0 } }
+        itens?.forEach((i: any) => {
+          const n = i.servicos?.nome?.toUpperCase()
+          if (n === 'PIX' || n === 'TED')
+            newRates[n] = { p: Number(i.taxa_percentual), f: Number(i.taxa_fixa) }
+        })
+        setRates(newRates)
+      }
+    }
+    fetchData()
+  }, [user])
+
+  const handleAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value.replace(/\D/g, '') || '0', 10) / 100
     setAmountStr(
-      num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     )
   }
 
-  const selectRecipient = (contact: any) => {
-    setRecipient(contact)
-    setStep(2)
-  }
-
-  const confirmTransfer = async () => {
-    if (!user || !conta) return
+  const handleTransfer = async () => {
+    if (!user || !conta || amount <= 0 || total > conta.saldo) return
     setLoading(true)
 
-    // Create new transaction logic
-    const { error: reqError } = await supabase.from('requisicoes').insert({
+    const { error: saldoErr } = await supabase
+      .from('contas')
+      .update({ saldo: conta.saldo - total })
+      .eq('id', conta.id)
+    if (saldoErr) {
+      toast.error('Erro de saldo')
+      return setLoading(false)
+    }
+
+    await supabase.from('requisicoes').insert({
       user_id: user.id,
-      tipo: 'PIX',
+      tipo: 'transferencia',
       valor: amount,
-      taxa_aplicada: 0,
-      valor_total: amount,
-      status: 'concluido',
+      taxa_aplicada: taxa,
+      valor_total: total,
+      status: 'pendente',
     })
 
-    if (!reqError) {
-      await supabase
-        .from('contas')
-        .update({ saldo: conta.saldo - amount })
-        .eq('id', conta.id)
-      await refreshData()
-      setStep(4)
+    if (saveFavorite) {
+      await supabase.from('favorecidos').insert({
+        user_id: user.id,
+        tipo: tab,
+        nome: name,
+        salvo: true,
+        chave_pix: tab === 'PIX' ? pixKey : null,
+        banco: tab === 'TED' ? tedBank : null,
+        agencia: tab === 'TED' ? tedAgency : null,
+        conta: tab === 'TED' ? tedAccount : null,
+      })
+      const { data } = await supabase
+        .from('favorecidos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('salvo', true)
+      setFavorites(data || [])
     }
+
+    toast.success('Transferência enviada com sucesso')
+    await refreshData()
+    setAmountStr('0,00')
+    setName('')
+    setPixKey('')
+    setTedBank('')
+    setTedAgency('')
+    setTedAccount('')
+    setSaveFavorite(false)
     setLoading(false)
   }
 
+  const deleteFav = async (id: string) => {
+    await supabase.from('favorecidos').delete().eq('id', id)
+    setFavorites(favorites.filter((f) => f.id !== id))
+    toast.success('Favorecido removido')
+  }
+
+  const fillFav = (fav: any) => {
+    setTab(fav.tipo)
+    setName(fav.nome)
+    if (fav.tipo === 'PIX') setPixKey(fav.chave_pix || '')
+    else {
+      setTedBank(fav.banco || '')
+      setTedAgency(fav.agencia || '')
+      setTedAccount(fav.conta || '')
+    }
+  }
+
+  const isFormValid =
+    name && amount > 0 && (tab === 'PIX' ? pixKey : tedBank && tedAgency && tedAccount)
+
   return (
-    <div className="max-w-2xl mx-auto flex flex-col pb-10 min-h-[80vh] animate-fade-in-up">
-      {step < 4 && (
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">Transferência & PIX</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Envie dinheiro com segurança e rapidez.
-          </p>
+    <div className="flex flex-col min-h-screen bg-white pb-20 animate-fade-in">
+      <div className="bg-[#8B5CF6] text-white p-4 flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-1 hover:bg-white/10 rounded-full transition-colors"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+        <h1 className="text-xl font-semibold">Transferir</h1>
+      </div>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'PIX' | 'TED')} className="w-full">
+        <TabsList className="w-full bg-white border-b border-gray-100 rounded-none p-0 flex h-auto">
+          {['PIX', 'TED'].map((t) => (
+            <TabsTrigger
+              key={t}
+              value={t}
+              className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-[#8B5CF6] data-[state=active]:text-[#8B5CF6] text-gray-500 py-3 font-medium transition-colors"
+            >
+              {t}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      <div className="p-4 flex flex-col gap-4">
+        {tab === 'PIX' ? (
+          <Input
+            value={pixKey}
+            onChange={(e) => setPixKey(e.target.value)}
+            placeholder="Chave PIX (CPF, e-mail, celular...)"
+            className="border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+          />
+        ) : (
+          <div className="flex flex-col gap-4">
+            <Select value={tedBank} onValueChange={setTedBank}>
+              <SelectTrigger className="h-12 border-gray-200 focus:ring-[#8B5CF6]">
+                <SelectValue placeholder="Banco" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="001">001 - Banco do Brasil</SelectItem>
+                <SelectItem value="033">033 - Santander</SelectItem>
+                <SelectItem value="104">104 - Caixa Econômica</SelectItem>
+                <SelectItem value="237">237 - Bradesco</SelectItem>
+                <SelectItem value="341">341 - Itaú</SelectItem>
+                <SelectItem value="260">260 - Nubank</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-4">
+              <Input
+                value={tedAgency}
+                onChange={(e) => setTedAgency(e.target.value)}
+                placeholder="Agência"
+                className="flex-1 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+              />
+              <Input
+                value={tedAccount}
+                onChange={(e) => setTedAccount(e.target.value)}
+                placeholder="Conta"
+                className="flex-1 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+              />
+            </div>
+          </div>
+        )}
+
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nome do favorecido"
+          className="border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+        />
+
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+            R$
+          </span>
+          <Input
+            value={amountStr}
+            onChange={handleAmount}
+            placeholder="0,00"
+            className="pl-10 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12 font-medium text-lg"
+          />
         </div>
-      )}
 
-      <Card className="border-none shadow-elevation bg-white flex-1 overflow-hidden">
-        <CardContent className="p-0 h-full">
-          {step === 1 && (
-            <div className="p-6 md:p-8 animate-fade-in">
-              <h2 className="text-lg font-semibold text-primary mb-4">
-                Para quem você quer transferir?
-              </h2>
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Nome, CPF, CNPJ ou Chave PIX"
-                  className="pl-10 h-12 text-base rounded-xl bg-slate-50 border-transparent focus-visible:bg-white"
-                />
-              </div>
+        <div className="flex items-center gap-2 mt-1">
+          <Checkbox
+            id="save"
+            checked={saveFavorite}
+            onCheckedChange={(c) => setSaveFavorite(!!c)}
+          />
+          <label htmlFor="save" className="text-sm text-gray-600">
+            Salvar como favorecido
+          </label>
+        </div>
+      </div>
 
-              <div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  Contatos Frequentes
-                </p>
-                <div className="space-y-2">
-                  {frequentContacts.map((contact) => (
-                    <div
-                      key={contact.id}
-                      onClick={() => selectRecipient(contact)}
-                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100"
-                    >
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={contact.img} />
-                        <AvatarFallback>
-                          <User />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-semibold text-primary">{contact.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {contact.type} • {contact.key}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-slate-300" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && recipient && (
-            <div className="flex flex-col h-full animate-fade-in-up">
-              <div className="p-6 md:p-8 flex-1 flex flex-col items-center justify-center min-h-[300px]">
-                <p className="text-slate-500 mb-6 text-center">
-                  Qual valor enviar para <br />
-                  <span className="font-semibold text-primary">{recipient.name}</span>?
-                </p>
-
-                <div className="relative flex items-center justify-center w-full max-w-xs">
-                  <span className="text-3xl font-medium text-slate-400 mr-2">R$</span>
-                  <input
-                    type="text"
-                    value={amountStr}
-                    onChange={handleAmountChange}
-                    className="text-5xl md:text-6xl font-bold text-primary w-full bg-transparent border-none outline-none text-left placeholder:text-slate-200"
-                    autoFocus
-                    placeholder="0,00"
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground mt-8">
-                  Saldo disponível:{' '}
-                  <span className="font-medium text-primary">
-                    {formatCurrency(conta?.saldo || 0)}
-                  </span>
-                </p>
-              </div>
-              <div className="p-6 bg-slate-50 border-t flex justify-between gap-4">
-                <Button variant="outline" className="flex-1 h-12" onClick={() => setStep(1)}>
-                  Voltar
-                </Button>
-                <Button
-                  className="flex-1 h-12"
-                  disabled={amount <= 0 || amount > (conta?.saldo || 0)}
-                  onClick={() => setStep(3)}
-                >
-                  Continuar
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && recipient && (
-            <div className="flex flex-col h-full animate-fade-in-up">
-              <div className="p-6 md:p-8 flex-1">
-                <h2 className="text-xl font-bold text-primary mb-6 text-center">
-                  Confirme os dados
-                </h2>
-
-                <div className="bg-slate-50 rounded-2xl p-6 mb-6 text-center border border-slate-100">
-                  <p className="text-sm text-slate-500 mb-2">Valor da transferência</p>
-                  <p className="text-4xl font-bold text-primary">{formatCurrency(amount)}</p>
-                </div>
-
-                <div className="space-y-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={recipient.img} />
-                      <AvatarFallback>
-                        <User />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm text-slate-500">Para</p>
-                      <p className="font-semibold text-primary">{recipient.name}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Chave PIX / Conta</span>
-                    <span className="font-medium text-primary">{recipient.key}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 bg-slate-50 border-t flex justify-between gap-4">
-                <Button variant="outline" className="w-1/3 h-12" onClick={() => setStep(2)}>
-                  Voltar
-                </Button>
-                <Button
-                  className="w-2/3 h-12 bg-accent hover:bg-emerald-600 text-white"
-                  onClick={confirmTransfer}
-                  disabled={loading}
-                >
-                  {loading ? 'Processando...' : 'Confirmar Transferência'}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center h-full min-h-[400px] animate-fade-in-up">
-              <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-slide-up">
-                <CheckCircle2 className="w-12 h-12 text-emerald-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-primary mb-2">Transferência Realizada!</h2>
-              <p className="text-muted-foreground mb-8">
-                O valor de {formatCurrency(amount)} foi enviado com sucesso para{' '}
-                <span className="font-semibold text-primary">{recipient?.name}</span>.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-                <Button
-                  className="flex-1 h-12"
-                  onClick={() => {
-                    setStep(1)
-                    setAmountStr('0,00')
+      <div className="px-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Favorecidos Salvos</h3>
+        {loadingFavs ? (
+          <Skeleton className="h-20 w-full rounded-xl" />
+        ) : (
+          <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
+            {favorites.map((fav) => (
+              <div
+                key={fav.id}
+                onClick={() => fillFav(fav)}
+                className="min-w-[220px] flex-shrink-0 bg-white border border-gray-200 hover:border-[#8B5CF6] rounded-xl p-3 flex flex-col gap-1 snap-start cursor-pointer relative group transition-colors"
+              >
+                <span className="text-xs font-bold text-[#8B5CF6]">{fav.tipo}</span>
+                <span className="font-medium text-sm text-gray-800 truncate pr-6">{fav.nome}</span>
+                <span className="text-xs text-gray-500 truncate">
+                  {fav.tipo === 'PIX' ? fav.chave_pix : `${fav.banco} - Ag: ${fav.agencia}`}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    deleteFav(fav.id)
                   }}
+                  className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1"
                 >
-                  Novo PIX
-                </Button>
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-gray-100 rounded-xl p-4 m-4 space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Valor</span>
+          <span className="font-medium">{formatCurrency(amount)}</span>
+        </div>
+        <div className="flex justify-between text-sm items-center">
+          <span className="text-gray-600">Taxa</span>
+          <Badge className="bg-[#8B5CF6] text-white hover:bg-[#8B5CF6]">
+            {formatCurrency(taxa)}
+          </Badge>
+        </div>
+        <div className="flex justify-between font-semibold pt-2 border-t border-gray-200">
+          <span className="text-gray-800">Total a debitar</span>
+          <span className="text-[#8B5CF6]">{formatCurrency(total)}</span>
+        </div>
+      </div>
+
+      <Button
+        onClick={handleTransfer}
+        disabled={!isFormValid || loading || total > (conta?.saldo || 0)}
+        className="mx-4 mb-6 h-14 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl text-base font-medium disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+      >
+        {loading
+          ? 'Processando...'
+          : total > (conta?.saldo || 0)
+            ? 'Saldo Insuficiente'
+            : 'Transferir'}
+      </Button>
     </div>
   )
 }
