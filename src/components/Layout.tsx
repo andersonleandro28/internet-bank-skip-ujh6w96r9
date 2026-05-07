@@ -31,8 +31,8 @@ const menuItems = [
   { icon: Home, label: 'Início', path: '/' },
   { icon: FileText, label: 'Extrato', path: '/extrato' },
   { icon: ArrowLeftRight, label: 'Transferências & PIX', path: '/transferir' },
-  { icon: Wallet, label: 'Pagamentos', path: '#' },
-  { icon: CreditCard, label: 'Cartões', path: '#' },
+  { icon: Wallet, label: 'Pagamentos', path: '/pagar-boleto' },
+  { icon: CreditCard, label: 'Cartões', path: '/carregar' },
   { icon: Settings, label: 'Configurações', path: '#' },
 ]
 
