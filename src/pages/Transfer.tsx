@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { formatCurrency, maskCpf } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/format'
+import { useBank } from '@/hooks/use-bank'
+import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 
 const frequentContacts = [
   {
@@ -22,19 +24,17 @@ const frequentContacts = [
     key: 'Ag: 0001 Cc: 12345-6',
     img: 'https://img.usecurling.com/ppl/thumbnail?gender=male&seed=3',
   },
-  {
-    id: 3,
-    name: 'Padaria Central',
-    type: 'PIX',
-    key: '12.345.678/0001-90',
-    img: 'https://img.usecurling.com/i?q=store',
-  },
 ]
 
 export default function Transfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [recipient, setRecipient] = useState<any>(null)
   const [amountStr, setAmountStr] = useState('0,00')
+  const [loading, setLoading] = useState(false)
+
+  const { conta, refreshData } = useBank()
+  const { user } = useAuth()
+
   const amount = parseFloat(amountStr.replace(/\./g, '').replace(',', '.')) || 0
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,11 +51,29 @@ export default function Transfer() {
     setStep(2)
   }
 
-  const confirmTransfer = () => {
-    // Simulate API call
-    setTimeout(() => {
+  const confirmTransfer = async () => {
+    if (!user || !conta) return
+    setLoading(true)
+
+    // Create new transaction logic
+    const { error: reqError } = await supabase.from('requisicoes').insert({
+      user_id: user.id,
+      tipo: 'PIX',
+      valor: amount,
+      taxa_aplicada: 0,
+      valor_total: amount,
+      status: 'concluido',
+    })
+
+    if (!reqError) {
+      await supabase
+        .from('contas')
+        .update({ saldo: conta.saldo - amount })
+        .eq('id', conta.id)
+      await refreshData()
       setStep(4)
-    }, 1500)
+    }
+    setLoading(false)
   }
 
   return (
@@ -71,7 +89,6 @@ export default function Transfer() {
 
       <Card className="border-none shadow-elevation bg-white flex-1 overflow-hidden">
         <CardContent className="p-0 h-full">
-          {/* STEP 1: Select Recipient */}
           {step === 1 && (
             <div className="p-6 md:p-8 animate-fade-in">
               <h2 className="text-lg font-semibold text-primary mb-4">
@@ -116,7 +133,6 @@ export default function Transfer() {
             </div>
           )}
 
-          {/* STEP 2: Amount */}
           {step === 2 && recipient && (
             <div className="flex flex-col h-full animate-fade-in-up">
               <div className="p-6 md:p-8 flex-1 flex flex-col items-center justify-center min-h-[300px]">
@@ -137,21 +153,27 @@ export default function Transfer() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground mt-8">
-                  Saldo disponível: <span className="font-medium text-primary">R$ 12.450,00</span>
+                  Saldo disponível:{' '}
+                  <span className="font-medium text-primary">
+                    {formatCurrency(conta?.saldo || 0)}
+                  </span>
                 </p>
               </div>
               <div className="p-6 bg-slate-50 border-t flex justify-between gap-4">
                 <Button variant="outline" className="flex-1 h-12" onClick={() => setStep(1)}>
                   Voltar
                 </Button>
-                <Button className="flex-1 h-12" disabled={amount <= 0} onClick={() => setStep(3)}>
+                <Button
+                  className="flex-1 h-12"
+                  disabled={amount <= 0 || amount > (conta?.saldo || 0)}
+                  onClick={() => setStep(3)}
+                >
                   Continuar
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Confirm */}
           {step === 3 && recipient && (
             <div className="flex flex-col h-full animate-fade-in-up">
               <div className="p-6 md:p-8 flex-1">
@@ -181,14 +203,6 @@ export default function Transfer() {
                     <span className="text-slate-500">Chave PIX / Conta</span>
                     <span className="font-medium text-primary">{recipient.key}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Instituição</span>
-                    <span className="font-medium text-primary">Banco NovaBank S.A.</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Data</span>
-                    <span className="font-medium text-primary">Hoje</span>
-                  </div>
                 </div>
               </div>
               <div className="p-6 bg-slate-50 border-t flex justify-between gap-4">
@@ -198,14 +212,14 @@ export default function Transfer() {
                 <Button
                   className="w-2/3 h-12 bg-accent hover:bg-emerald-600 text-white"
                   onClick={confirmTransfer}
+                  disabled={loading}
                 >
-                  Confirmar Transferência
+                  {loading ? 'Processando...' : 'Confirmar Transferência'}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: Success */}
           {step === 4 && (
             <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center h-full min-h-[400px] animate-fade-in-up">
               <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-slide-up">
@@ -218,10 +232,13 @@ export default function Transfer() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-                <Button variant="outline" className="flex-1 h-12">
-                  Comprovante
-                </Button>
-                <Button className="flex-1 h-12" onClick={() => setStep(1)}>
+                <Button
+                  className="flex-1 h-12"
+                  onClick={() => {
+                    setStep(1)
+                    setAmountStr('0,00')
+                  }}
+                >
                   Novo PIX
                 </Button>
               </div>

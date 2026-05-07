@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Eye, EyeOff, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/format'
+import { useBank } from '@/hooks/use-bank'
 
 export function BalanceCard() {
   const [isVisible, setIsVisible] = useState(true)
+  const { conta } = useBank()
 
-  const balance = 12450.0
-  const creditLimit = 8500.0
-  const invoice = 2150.75
+  const balance = conta?.saldo || 0
+  const creditLimit = 8500.0 // mockup
+  const invoice = 2150.75 // mockup
 
   return (
     <Card className="p-6 md:p-8 border-none shadow-elevation bg-white relative overflow-hidden">

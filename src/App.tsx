@@ -12,26 +12,40 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import NotFound from './pages/NotFound'
 
+import { AuthProvider } from '@/hooks/use-auth'
+import { BankProvider } from '@/hooks/use-bank'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        {/* Auth Routes without main Layout */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <BankProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            {/* Auth Routes without main Layout */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-        {/* Main App Routes */}
-        <Route element={<Layout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/extrato" element={<Extrato />} />
-          <Route path="/transferir" element={<Transfer />} />
-        </Route>
+            {/* Main App Routes */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Index />} />
+              <Route path="/extrato" element={<Extrato />} />
+              <Route path="/transferir" element={<Transfer />} />
+            </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </BankProvider>
+    </AuthProvider>
   </BrowserRouter>
 )
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Card,
@@ -10,14 +11,33 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function Register() {
   const navigate = useNavigate()
+  const { signUp } = useAuth()
 
-  const handleRegister = (e: React.FormEvent) => {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock register -> redirect to home
-    navigate('/')
+    setLoading(true)
+    setErrorMsg('')
+
+    const { error } = await signUp(email, password, {
+      data: { name },
+    })
+
+    if (error) {
+      setErrorMsg(error.message)
+      setLoading(false)
+    } else {
+      navigate('/')
+    }
   }
 
   return (
@@ -44,19 +64,19 @@ export default function Register() {
           </CardHeader>
           <form onSubmit={handleRegister}>
             <CardContent className="space-y-4">
+              {errorMsg && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{errorMsg}</div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
-                <Input id="name" placeholder="João da Silva" className="h-12 px-4" required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input id="cpf" placeholder="000.000.000-00" className="h-12 px-4" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Data de Nascimento</Label>
-                  <Input id="dob" type="date" className="h-12 px-4" required />
-                </div>
+                <Input
+                  id="name"
+                  placeholder="João da Silva"
+                  className="h-12 px-4"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
@@ -65,17 +85,20 @@ export default function Register() {
                   type="email"
                   placeholder="seu@email.com"
                   className="h-12 px-4"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Crie uma Senha (6 dígitos)</Label>
+                <Label htmlFor="password">Crie uma Senha Forte</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••"
-                  maxLength={6}
+                  placeholder="••••••••"
                   className="h-12 px-4"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
@@ -84,8 +107,8 @@ export default function Register() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col pt-4 space-y-4">
-              <Button type="submit" className="w-full h-12 text-base">
-                Continuar
+              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                {loading ? 'Processando...' : 'Continuar'}
               </Button>
               <div className="text-center text-sm text-muted-foreground">
                 Já possui conta?{' '}
