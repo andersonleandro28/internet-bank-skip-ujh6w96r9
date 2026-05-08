@@ -38,13 +38,15 @@ export default function ClientePerfil() {
         usuarios_pf (nome, cpf, data_nascimento, selfie_url, documento_identidade_url),
         usuarios_pj (razao_social, cnpj, documentos_url, resp_nome, resp_cpf, resp_data_nascimento, resp_selfie_url, resp_documento_url),
         contas (saldo, saldo_bloqueado),
-        requisicoes (id, tipo, valor_total, status, created_at),
-        depositos (id, valor, status, created_at)
+        requisicoes!requisicoes_user_id_fkey (id, tipo, valor_total, status, created_at),
+        depositos!depositos_user_id_fkey (id, valor, status, created_at)
       `)
       .eq('id', userId)
       .single()
 
-    if (!error && data) {
+    if (error) {
+      console.error('Erro ao buscar cliente:', error)
+    } else if (data) {
       setCliente(data)
     }
     setLoading(false)
