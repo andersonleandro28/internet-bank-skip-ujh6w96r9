@@ -14,14 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
@@ -76,23 +69,19 @@ function ServiceCard({
   const Icon = icons[servico.nome] || Activity
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <Icon className="w-5 h-5" />
-          </div>
-          <div>
-            <CardTitle className="text-lg leading-tight">{servico.nome}</CardTitle>
-            <CardDescription className="text-xs mt-1 line-clamp-2">
-              {servico.descricao}
-            </CardDescription>
-          </div>
+    <Card className="flex flex-col border-y border-r border-slate-100 border-l-4 border-l-primary shadow-subtle p-4 rounded-xl bg-white">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+          <Icon className="w-8 h-8" />
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 space-y-4">
-        <div className="space-y-1.5">
-          <Label>Taxa percentual (%)</Label>
+        <div>
+          <h3 className="text-lg font-semibold leading-tight text-slate-800">{servico.nome}</h3>
+          <p className="text-sm mt-1 line-clamp-2 text-slate-500">{servico.descricao}</p>
+        </div>
+      </div>
+      <div className="flex-1 space-y-4">
+        <div className="space-y-2">
+          <Label className="text-slate-700">Taxa percentual (%)</Label>
           <Input
             type="number"
             min="0"
@@ -100,35 +89,49 @@ function ServiceCard({
             step="0.01"
             value={percentual}
             onChange={(e) => setPercentual(e.target.value)}
+            className="p-3 border-slate-200 focus-visible:ring-primary h-auto"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label>Taxa fixa (R$)</Label>
+        <div className="space-y-2">
+          <Label className="text-slate-700">Taxa fixa (R$)</Label>
           <Input
             type="number"
             min="0"
             step="0.01"
             value={valorFixo}
             onChange={(e) => setValorFixo(e.target.value)}
+            className="p-3 border-slate-200 focus-visible:ring-primary h-auto"
           />
         </div>
         <div className="flex items-center justify-between pt-2">
-          <Label className="cursor-pointer" htmlFor={`status-${servico.id}`}>
+          <Label
+            className="cursor-pointer text-slate-700 font-medium"
+            htmlFor={`status-${servico.id}`}
+          >
             Serviço Ativo
           </Label>
-          <Switch id={`status-${servico.id}`} checked={ativo} onCheckedChange={setAtivo} />
+          <Switch
+            id={`status-${servico.id}`}
+            checked={ativo}
+            onCheckedChange={setAtivo}
+            className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-slate-200"
+          />
         </div>
-      </CardContent>
-      <CardFooter>
-        <Button className="w-full" onClick={handleSave} disabled={loading}>
+      </div>
+      <div className="pt-4 mt-auto">
+        <Button
+          className="w-full bg-primary hover:bg-primary/90 text-white disabled:bg-slate-300 disabled:text-slate-500 py-6 font-medium text-base rounded-xl transition-colors"
+          onClick={handleSave}
+          disabled={loading}
+        >
           {loading ? (
-            <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+            <RefreshCcw className="w-5 h-5 mr-2 animate-spin" />
           ) : (
-            <Check className="w-4 h-4 mr-2" />
+            <Check className="w-5 h-5 mr-2" />
           )}
           Salvar
         </Button>
-      </CardFooter>
+      </div>
     </Card>
   )
 }
@@ -193,15 +196,13 @@ export default function ConfiguracoesTaxas() {
         taxaId = data?.id
       }
 
-      await supabase
-        .from('auditoria')
-        .insert({
-          admin_id: user?.id,
-          acao: 'alterou_taxa',
-          tabela: 'taxas_servicos',
-          registro_id: taxaId,
-          taxa_aplicada: p,
-        })
+      await supabase.from('auditoria').insert({
+        admin_id: user?.id,
+        acao: 'alterou_taxa',
+        tabela: 'taxas_servicos',
+        registro_id: taxaId,
+        taxa_aplicada: p,
+      })
       toast.success('Taxa atualizada com sucesso')
       fetchData()
     } catch (e) {
@@ -212,7 +213,7 @@ export default function ConfiguracoesTaxas() {
   const logs = useMemo(() => {
     return auditoria
       .map((a, i, arr) => {
-        const s = servicos.find((s) => s.taxas_servicos[0]?.id === a.registro_id)
+        const s = servicos.find((srv) => srv.taxas_servicos[0]?.id === a.registro_id)
         const prev = arr
           .slice(i + 1)
           .find((old) => old.registro_id === a.registro_id)?.taxa_aplicada
@@ -228,100 +229,122 @@ export default function ConfiguracoesTaxas() {
   }, [auditoria, servicos, filter])
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-          Configurar Serviços e Taxas
-        </h1>
-      </div>
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[360px] w-full rounded-xl" />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-100">
-          <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={fetchData}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Tentar novamente
+    <div className="bg-slate-50 min-h-screen animate-fade-in-up pb-12">
+      <div className="bg-primary p-4 md:p-6 text-white flex items-center gap-4 shadow-sm pb-10 pt-6">
+        <div className="max-w-7xl mx-auto w-full flex items-center gap-4 px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="text-white hover:bg-white/20 hover:text-white rounded-full"
+          >
+            <ArrowLeft className="w-6 h-6" />
           </Button>
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
+              Configurar Serviços e Taxas
+            </h1>
+            <p className="text-primary-foreground/90 text-sm mt-0.5">
+              Gerencie as taxas globais do sistema
+            </p>
+          </div>
         </div>
-      ) : servicos.length === 0 ? (
-        <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-100">
-          <p className="text-muted-foreground">Nenhum serviço encontrado no banco de dados.</p>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {servicos.map((s) => (
-              <ServiceCard key={s.id} servico={s} onSave={handleSave} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 -mt-6 relative z-10">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton
+                key={i}
+                className="h-[360px] w-full rounded-xl bg-white shadow-subtle border border-slate-100"
+              />
             ))}
           </div>
-          <section className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl font-bold text-slate-800">Histórico de Alterações</h2>
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filtrar por serviço" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os serviços</SelectItem>
-                  {servicos.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        ) : error ? (
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-100 shadow-subtle">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={fetchData} className="bg-primary hover:bg-primary/90 text-white">
+              <RefreshCcw className="w-4 h-4 mr-2" />
+              Tentar novamente
+            </Button>
+          </div>
+        ) : servicos.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-100 shadow-subtle">
+            <p className="text-muted-foreground">Nenhum serviço encontrado no banco de dados.</p>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              {servicos.map((s) => (
+                <ServiceCard key={s.id} servico={s} onSave={handleSave} />
+              ))}
             </div>
-            <div className="space-y-4">
-              {logs.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhum registro de alteração encontrado.
-                </p>
-              ) : (
-                logs.map((log) => (
-                  <Card
-                    key={log.id}
-                    className="p-4 md:p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold">{log.serviceName}</span>
-                        <span className="text-sm text-muted-foreground">•</span>
-                        <span className="text-sm text-muted-foreground">{log.adminEmail}</span>
+
+            <section className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="text-xl font-semibold text-slate-800">Histórico de Alterações</h2>
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="w-full md:w-[240px] p-3 h-auto border-slate-200 bg-white shadow-sm">
+                    <SelectValue placeholder="Filtrar por serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os serviços</SelectItem>
+                    {servicos.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
+                {logs.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8 bg-white rounded-xl shadow-subtle">
+                    Nenhum registro de alteração encontrado.
+                  </p>
+                ) : (
+                  logs.map((log) => (
+                    <Card
+                      key={log.id}
+                      className="p-3 px-4 bg-white flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-slate-100 shadow-subtle rounded-xl"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-slate-800">{log.serviceName}</span>
+                          <span className="text-sm text-slate-400">•</span>
+                          <span className="text-sm text-slate-600">{log.adminEmail}</span>
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {format(new Date(log.timestamp), "dd/MM/yyyy 'às' HH:mm", {
+                            locale: ptBR,
+                          })}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {format(new Date(log.timestamp), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 w-full md:w-auto justify-between md:justify-start">
+                        {log.prevValue !== undefined && (
+                          <>
+                            <div className="text-sm">
+                              <span className="text-slate-400 block text-xs">Anterior</span>
+                              <span className="font-medium text-slate-600">{log.prevValue}%</span>
+                            </div>
+                            <ArrowLeftRight className="w-4 h-4 text-slate-300" />
+                          </>
+                        )}
+                        <div className="text-sm text-right md:text-left">
+                          <span className="text-slate-400 block text-xs">Nova</span>
+                          <span className="font-medium text-primary">{log.taxa_aplicada}%</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-lg">
-                      {log.prevValue !== undefined && (
-                        <>
-                          <div className="text-sm">
-                            <span className="text-muted-foreground block text-xs">Anterior</span>
-                            <span className="font-medium">{log.prevValue}%</span>
-                          </div>
-                          <ArrowLeftRight className="w-4 h-4 text-slate-400" />
-                        </>
-                      )}
-                      <div className="text-sm">
-                        <span className="text-muted-foreground block text-xs">Nova</span>
-                        <span className="font-medium text-primary">{log.taxa_aplicada}%</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              )}
-            </div>
-          </section>
-        </div>
-      )}
+                    </Card>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

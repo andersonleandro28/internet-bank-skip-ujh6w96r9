@@ -738,6 +738,8 @@ export const Constants = {
 
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: auditoria
+//   Policy "auditoria_insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: is_admin()
 //   Policy "auditoria_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM usuarios   WHERE ((usuarios.id = auth.uid()) AND (usuarios.role = 'admin'::role_usuario))))
 // Table: cestas_clientes
@@ -771,9 +773,17 @@ export const Constants = {
 // Table: servicos
 //   Policy "servicos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
+//   Policy "servicos_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 // Table: taxas_servicos
+//   Policy "taxas_servicos_insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: is_admin()
 //   Policy "taxas_servicos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
+//   Policy "taxas_servicos_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 // Table: usuarios
 //   Policy "usuarios_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
