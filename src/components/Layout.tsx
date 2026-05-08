@@ -15,6 +15,7 @@ import {
   CircleDollarSign,
   ShieldAlert,
   Users,
+  BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -47,6 +48,7 @@ const adminMenuItems = [
   { icon: CheckSquare, label: 'Aprovações', path: '/admin/painel' },
   { icon: Users, label: 'Clientes', path: '/admin/clientes' },
   { icon: CircleDollarSign, label: 'Depósitos', path: '/admin/depositar' },
+  { icon: BarChart3, label: 'Financeiro', path: '/admin/financeiro' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes-taxas' },
   { icon: ShieldAlert, label: 'Auditoria', path: '/admin/auditoria' },
 ]

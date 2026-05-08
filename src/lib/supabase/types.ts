@@ -271,6 +271,44 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link: string | null
+          mensagem: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notificacoes_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       requisicoes: {
         Row: {
           created_at: string
@@ -707,6 +745,14 @@ export const Constants = {
 //   ip: text (nullable)
 //   dispositivo: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
+// Table: notificacoes
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   tipo: text (not null)
+//   mensagem: text (not null)
+//   lida: boolean (not null, default: false)
+//   link: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: requisicoes
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -779,6 +825,10 @@ export const Constants = {
 // Table: historico_logins
 //   PRIMARY KEY historico_logins_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY historico_logins_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+// Table: notificacoes
+//   PRIMARY KEY notificacoes_pkey: PRIMARY KEY (id)
+//   CHECK notificacoes_tipo_check: CHECK ((tipo = ANY (ARRAY['sucesso'::text, 'aviso'::text, 'erro'::text])))
+//   FOREIGN KEY notificacoes_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 // Table: requisicoes
 //   PRIMARY KEY requisicoes_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY requisicoes_processed_by_fkey: FOREIGN KEY (processed_by) REFERENCES usuarios(id)
@@ -843,6 +893,12 @@ export const Constants = {
 //     WITH CHECK: (user_id = auth.uid())
 //   Policy "historico_logins_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
+// Table: notificacoes
+//   Policy "notificacoes_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+//   Policy "notificacoes_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+//     WITH CHECK: (user_id = auth.uid())
 // Table: requisicoes
 //   Policy "requisicoes_admin_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: is_admin()
@@ -981,6 +1037,109 @@ export const Constants = {
 //   END;
 //   $function$
 //
+// FUNCTION notify_admin_new_requisicao()
+//   CREATE OR REPLACE FUNCTION public.notify_admin_new_requisicao()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     v_nome text;
+//   BEGIN
+//     SELECT COALESCE(pf.nome, pj.razao_social, 'Cliente') INTO v_nome
+//     FROM public.usuarios u
+//     LEFT JOIN public.usuarios_pf pf ON u.id = pf.user_id
+//     LEFT JOIN public.usuarios_pj pj ON u.id = pj.user_id
+//     WHERE u.id = NEW.user_id
+//     LIMIT 1;
+//
+//     INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//     SELECT id, 'aviso', 'Nova requisição de ' || v_nome || ' aguardando análise', '/admin/painel'
+//     FROM public.usuarios WHERE role = 'admin';
+//
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION notify_admin_new_usuario_pf()
+//   CREATE OR REPLACE FUNCTION public.notify_admin_new_usuario_pf()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//     SELECT id, 'aviso', 'Novo cadastro de ' || NEW.nome || ' aguardando aprovação', '/admin/clientes'
+//     FROM public.usuarios WHERE role = 'admin';
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION notify_admin_new_usuario_pj()
+//   CREATE OR REPLACE FUNCTION public.notify_admin_new_usuario_pj()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//     SELECT id, 'aviso', 'Novo cadastro de ' || NEW.razao_social || ' aguardando aprovação', '/admin/clientes'
+//     FROM public.usuarios WHERE role = 'admin';
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION notify_depositos()
+//   CREATE OR REPLACE FUNCTION public.notify_depositos()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     IF NEW.admin_id IS NOT NULL THEN
+//       INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//       VALUES (NEW.user_id, 'sucesso', 'Depósito de R$ ' || NEW.valor || ' recebido com sucesso', '/extrato');
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION notify_requisicoes_update()
+//   CREATE OR REPLACE FUNCTION public.notify_requisicoes_update()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     IF OLD.status = 'pendente' AND NEW.status = 'aprovado' THEN
+//       INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//       VALUES (NEW.user_id, 'sucesso', 'Sua requisição de R$ ' || NEW.valor_total || ' foi aprovada', '/extrato');
+//     ELSIF OLD.status = 'pendente' AND NEW.status = 'reprovado' THEN
+//       INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//       VALUES (NEW.user_id, 'erro', 'Sua requisição de R$ ' || NEW.valor_total || ' foi reprovada', '/extrato');
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION notify_usuarios_update()
+//   CREATE OR REPLACE FUNCTION public.notify_usuarios_update()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     IF OLD.status = 'pendente' AND NEW.status = 'aprovado' THEN
+//       INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//       VALUES (NEW.id, 'sucesso', 'Seu cadastro foi aprovado! Bem-vindo', '/perfil');
+//     ELSIF OLD.status = 'pendente' AND NEW.status = 'reprovado' THEN
+//       INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
+//       VALUES (NEW.id, 'erro', 'Seu cadastro foi reprovado', '/perfil');
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 // FUNCTION realizar_deposito(uuid, numeric, uuid)
 //   CREATE OR REPLACE FUNCTION public.realizar_deposito(p_cliente_id uuid, p_valor numeric, p_admin_id uuid)
 //    RETURNS void
@@ -1060,9 +1219,24 @@ export const Constants = {
 //   $function$
 //
 
+// --- TRIGGERS ---
+// Table: depositos
+//   on_deposito_inserted: CREATE TRIGGER on_deposito_inserted AFTER INSERT ON public.depositos FOR EACH ROW EXECUTE FUNCTION notify_depositos()
+// Table: requisicoes
+//   on_requisicao_inserted: CREATE TRIGGER on_requisicao_inserted AFTER INSERT ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION notify_admin_new_requisicao()
+//   on_requisicao_updated: CREATE TRIGGER on_requisicao_updated AFTER UPDATE ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION notify_requisicoes_update()
+// Table: usuarios
+//   on_usuario_updated: CREATE TRIGGER on_usuario_updated AFTER UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION notify_usuarios_update()
+// Table: usuarios_pf
+//   on_usuario_pf_inserted: CREATE TRIGGER on_usuario_pf_inserted AFTER INSERT ON public.usuarios_pf FOR EACH ROW EXECUTE FUNCTION notify_admin_new_usuario_pf()
+// Table: usuarios_pj
+//   on_usuario_pj_inserted: CREATE TRIGGER on_usuario_pj_inserted AFTER INSERT ON public.usuarios_pj FOR EACH ROW EXECUTE FUNCTION notify_admin_new_usuario_pj()
+
 // --- INDEXES ---
 // Table: contas
 //   CREATE UNIQUE INDEX contas_user_id_key ON public.contas USING btree (user_id)
+// Table: notificacoes
+//   CREATE INDEX notificacoes_user_id_idx ON public.notificacoes USING btree (user_id)
 // Table: servicos
 //   CREATE UNIQUE INDEX servicos_nome_key ON public.servicos USING btree (nome)
 // Table: usuarios_pf
