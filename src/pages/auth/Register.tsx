@@ -23,7 +23,7 @@ import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
 type TipoConta = 'PF' | 'PJ' | null
 
 const Confetti = () => {
-  const colors = ['bg-purple-500', 'bg-blue-500', 'bg-pink-500', 'bg-yellow-500', 'bg-green-500']
+  const colors = ['bg-green-400', 'bg-green-500', 'bg-green-600', 'bg-emerald-500', 'bg-teal-500']
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
       {[...Array(60)].map((_, i) => {
@@ -50,12 +50,14 @@ const Confetti = () => {
 const FileUpload = ({
   label,
   accept,
+  capture,
   onChange,
   file,
   id,
 }: {
   label: string
   accept: string
+  capture?: 'user' | 'environment'
   onChange: (e: any) => void
   file: File | null
   id: string
@@ -68,13 +70,17 @@ const FileUpload = ({
       {file ? (
         <>
           <CheckCircle2 className="w-8 h-8 text-primary mb-2" />
-          <span className="text-sm font-medium text-primary">{file.name}</span>
+          <span className="text-sm font-medium text-primary truncate max-w-full px-2">
+            {file.name}
+          </span>
           <span className="text-xs text-muted-foreground mt-1">Clique para trocar de arquivo</span>
         </>
       ) : (
         <>
           <Camera className="w-8 h-8 text-slate-400 mb-2 group-hover:text-primary transition-colors" />
-          <span className="text-sm text-slate-600 font-medium">Clique para enviar ou arraste</span>
+          <span className="text-sm text-slate-600 font-medium">
+            Clique para enviar ou fotografar
+          </span>
           <span className="text-xs text-slate-400 mt-1">PNG, JPG ou PDF (máx. 5MB)</span>
         </>
       )}
@@ -82,6 +88,7 @@ const FileUpload = ({
         id={id}
         type="file"
         accept={accept}
+        {...(capture ? { capture } : {})}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         onChange={onChange}
         required
@@ -106,11 +113,19 @@ export default function Register() {
   const [cpf, setCpf] = useState('')
   const [dataNascimento, setDataNascimento] = useState('')
   const [selfie, setSelfie] = useState<File | null>(null)
+  const [documentoIdentidade, setDocumentoIdentidade] = useState<File | null>(null)
 
   // PJ fields
   const [razaoSocial, setRazaoSocial] = useState('')
   const [cnpj, setCnpj] = useState('')
   const [documentos, setDocumentos] = useState<File | null>(null)
+
+  // PJ Responsible fields
+  const [respNome, setRespNome] = useState('')
+  const [respCpf, setRespCpf] = useState('')
+  const [respDataNascimento, setRespDataNascimento] = useState('')
+  const [respSelfie, setRespSelfie] = useState<File | null>(null)
+  const [respDocumento, setRespDocumento] = useState<File | null>(null)
 
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -164,8 +179,6 @@ export default function Register() {
 
       const userId = data.user.id
 
-      // Sincronização defensiva: garante que as tabelas base existem.
-      // Se o ID for de um usuário falso (e-mail já existe), isso falhará com 23503 (FK violation em auth.users).
       const { error: userError } = await supabase.from('usuarios').insert({
         id: userId,
         email: email,
@@ -178,7 +191,7 @@ export default function Register() {
         if (userError.code === '23503') {
           throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
         }
-        if (userError.code !== '23505') throw userError // 23505 = já existe (ok)
+        if (userError.code !== '23505') throw userError
       }
 
       const { error: contaError } = await supabase.from('contas').insert({
@@ -192,13 +205,16 @@ export default function Register() {
 
       if (tipo === 'PF') {
         if (selfie) fileUrl = await uploadFile(selfie, userId)
+        let docIdentidadeUrl = ''
+        if (documentoIdentidade) docIdentidadeUrl = await uploadFile(documentoIdentidade, userId)
 
-        const { error: pfError } = await supabase.from('usuarios_pf').insert({
+        const { error: pfError } = await (supabase as any).from('usuarios_pf').insert({
           user_id: userId,
           cpf,
           nome,
           data_nascimento: dataNascimento || null,
           selfie_url: fileUrl,
+          documento_identidade_url: docIdentidadeUrl,
         })
         if (pfError) {
           if (pfError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
@@ -208,11 +224,22 @@ export default function Register() {
       } else if (tipo === 'PJ') {
         if (documentos) fileUrl = await uploadFile(documentos, userId)
 
-        const { error: pjError } = await supabase.from('usuarios_pj').insert({
+        let respSelfieUrl = ''
+        if (respSelfie) respSelfieUrl = await uploadFile(respSelfie, userId)
+
+        let respDocUrl = ''
+        if (respDocumento) respDocUrl = await uploadFile(respDocumento, userId)
+
+        const { error: pjError } = await (supabase as any).from('usuarios_pj').insert({
           user_id: userId,
           cnpj,
           razao_social: razaoSocial,
           documentos_url: fileUrl,
+          resp_nome: respNome,
+          resp_cpf: respCpf,
+          resp_data_nascimento: respDataNascimento || null,
+          resp_selfie_url: respSelfieUrl,
+          resp_documento_url: respDocUrl,
         })
         if (pjError) {
           if (pjError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
@@ -234,7 +261,6 @@ export default function Register() {
     }
   }
 
-  // SUCCESS STATE
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white p-5">
@@ -263,7 +289,6 @@ export default function Register() {
     )
   }
 
-  // EMPTY STATE (Type Selection)
   if (!tipo) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white p-5 relative">
@@ -276,9 +301,10 @@ export default function Register() {
           <div className="flex justify-center mb-10">
             <Link
               to="/"
-              className="bg-black/95 p-5 rounded-2xl shadow-xl hover:scale-105 transition-transform"
+              className="bg-black/95 p-5 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
             >
-              <img src={logoAclop} alt="ACLOP Bank" className="h-16 object-contain" />
+              <img src={logoAclop} alt="ACLOP Logo" className="h-16 object-contain" />
+              <span className="text-white font-bold text-3xl tracking-wider">ACLOP</span>
             </Link>
           </div>
 
@@ -336,7 +362,6 @@ export default function Register() {
     )
   }
 
-  // FORM STATE
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50/50 p-5 py-12">
       <div
@@ -391,7 +416,6 @@ export default function Register() {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {/* Dados de Acesso */}
                   <div className="space-y-5">
                     <h3 className="font-semibold text-sm text-slate-400 uppercase tracking-wider">
                       Dados de Acesso
@@ -407,7 +431,7 @@ export default function Register() {
                           placeholder="seu@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                          className="h-12 rounded-xl"
                           required
                         />
                       </div>
@@ -421,7 +445,7 @@ export default function Register() {
                           placeholder="Crie uma senha forte"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                          className="h-12 rounded-xl"
                           required
                           minLength={6}
                         />
@@ -431,7 +455,6 @@ export default function Register() {
 
                   <div className="h-px w-full bg-slate-100" />
 
-                  {/* Dados Específicos */}
                   <div className="space-y-5">
                     <h3 className="font-semibold text-sm text-slate-400 uppercase tracking-wider">
                       Dados {tipo === 'PF' ? 'Pessoais' : 'da Empresa'}
@@ -448,7 +471,7 @@ export default function Register() {
                             placeholder="João da Silva"
                             value={nome}
                             onChange={(e) => setNome(e.target.value)}
-                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                            className="h-12 rounded-xl"
                             required
                           />
                         </div>
@@ -462,7 +485,7 @@ export default function Register() {
                               placeholder="000.000.000-00"
                               value={cpf}
                               onChange={(e) => setCpf(maskCpf(e.target.value))}
-                              className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                              className="h-12 rounded-xl"
                               required
                               maxLength={14}
                             />
@@ -476,7 +499,7 @@ export default function Register() {
                               type="date"
                               value={dataNascimento}
                               onChange={(e) => setDataNascimento(e.target.value)}
-                              className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                              className="h-12 rounded-xl"
                               required
                             />
                           </div>
@@ -485,8 +508,17 @@ export default function Register() {
                           id="selfie"
                           label="Selfie (Foto do rosto)"
                           accept="image/*"
+                          capture="user"
                           file={selfie}
                           onChange={(e) => handleFileChange(e, setSelfie)}
+                        />
+                        <FileUpload
+                          id="documentoIdentidade"
+                          label="Documento de Identidade (Frente e Verso)"
+                          accept="image/*,.pdf"
+                          capture="environment"
+                          file={documentoIdentidade}
+                          onChange={(e) => handleFileChange(e, setDocumentoIdentidade)}
                         />
                       </div>
                     ) : (
@@ -500,7 +532,7 @@ export default function Register() {
                             placeholder="Sua Empresa LTDA"
                             value={razaoSocial}
                             onChange={(e) => setRazaoSocial(e.target.value)}
-                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                            className="h-12 rounded-xl"
                             required
                           />
                         </div>
@@ -513,7 +545,7 @@ export default function Register() {
                             placeholder="00.000.000/0000-00"
                             value={cnpj}
                             onChange={(e) => setCnpj(maskCnpj(e.target.value))}
-                            className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all text-base"
+                            className="h-12 rounded-xl"
                             required
                             maxLength={18}
                           />
@@ -525,6 +557,72 @@ export default function Register() {
                           file={documentos}
                           onChange={(e) => handleFileChange(e, setDocumentos)}
                         />
+
+                        <div className="h-px w-full bg-slate-100 my-6" />
+
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-sm text-slate-800">
+                            Dados do Responsável
+                          </h4>
+                          <div className="space-y-2">
+                            <Label htmlFor="respNome" className="text-slate-600">
+                              Nome do Responsável
+                            </Label>
+                            <Input
+                              id="respNome"
+                              placeholder="Nome Completo"
+                              value={respNome}
+                              onChange={(e) => setRespNome(e.target.value)}
+                              className="h-12 rounded-xl"
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="respCpf" className="text-slate-600">
+                                CPF do Responsável
+                              </Label>
+                              <Input
+                                id="respCpf"
+                                placeholder="000.000.000-00"
+                                value={respCpf}
+                                onChange={(e) => setRespCpf(maskCpf(e.target.value))}
+                                className="h-12 rounded-xl"
+                                required
+                                maxLength={14}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="respDataNascimento" className="text-slate-600">
+                                Data de Nascimento
+                              </Label>
+                              <Input
+                                id="respDataNascimento"
+                                type="date"
+                                value={respDataNascimento}
+                                onChange={(e) => setRespDataNascimento(e.target.value)}
+                                className="h-12 rounded-xl"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <FileUpload
+                            id="respSelfie"
+                            label="Selfie do Responsável"
+                            accept="image/*"
+                            capture="user"
+                            file={respSelfie}
+                            onChange={(e) => handleFileChange(e, setRespSelfie)}
+                          />
+                          <FileUpload
+                            id="respDocumento"
+                            label="Documento de Identidade do Responsável"
+                            accept="image/*,.pdf"
+                            capture="environment"
+                            file={respDocumento}
+                            onChange={(e) => handleFileChange(e, setRespDocumento)}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
