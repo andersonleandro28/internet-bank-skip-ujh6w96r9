@@ -22,6 +22,7 @@ import Auditoria from './pages/admin/Auditoria'
 import Clientes from './pages/admin/Clientes'
 import ClientePerfil from './pages/admin/ClientePerfil'
 import DashboardFinanceiro from './pages/admin/DashboardFinanceiro'
+import EmailsPendentes from './pages/admin/EmailsPendentes'
 
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
@@ -65,6 +66,7 @@ const App = () => (
                 <Route path="/admin/clientes" element={<Clientes />} />
                 <Route path="/admin/clientes/:id" element={<ClientePerfil />} />
                 <Route path="/admin/financeiro" element={<DashboardFinanceiro />} />
+                <Route path="/admin/emails-pendentes" element={<EmailsPendentes />} />
               </Route>
             </Route>
 
