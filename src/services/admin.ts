@@ -31,3 +31,11 @@ export const reprovarRequisicao = async (reqId: string, adminId: string) => {
   })
   if (error) throw error
 }
+
+export const atualizarEmailUsuario = async (userId: string, email: string) => {
+  const { error } = await supabase.rpc('admin_update_user_email' as any, {
+    p_user_id: userId,
+    p_email: email,
+  })
+  if (error) throw error
+}

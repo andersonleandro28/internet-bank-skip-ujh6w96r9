@@ -24,7 +24,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
-import { aprovarUsuario, reprovarUsuario } from '@/services/admin'
+import { aprovarUsuario, reprovarUsuario, atualizarEmailUsuario } from '@/services/admin'
 
 export default function ClientePerfil() {
   const { id } = useParams<{ id: string }>()
@@ -69,6 +69,7 @@ export default function ClientePerfil() {
 
   const handleEdit = () => {
     setEditData({
+      email: cliente.email,
       nome:
         cliente.tipo === 'PF'
           ? cliente.usuarios_pf?.[0]?.nome
@@ -86,6 +87,10 @@ export default function ClientePerfil() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      if (editData.email && editData.email !== cliente.email) {
+        await atualizarEmailUsuario(cliente.id, editData.email)
+      }
+
       if (cliente.tipo === 'PF') {
         const { error } = await supabase
           .from('usuarios_pf')
@@ -376,12 +381,22 @@ export default function ClientePerfil() {
             <CardContent className="space-y-6">
               {isEditing ? (
                 <div className="grid gap-4 border-b pb-6">
-                  <div className="grid gap-2">
-                    <Label>{cliente.tipo === 'PF' ? 'Nome Completo' : 'Razão Social'}</Label>
-                    <Input
-                      value={editData.nome || ''}
-                      onChange={(e) => setEditData({ ...editData, nome: e.target.value })}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>{cliente.tipo === 'PF' ? 'Nome Completo' : 'Razão Social'}</Label>
+                      <Input
+                        value={editData.nome || ''}
+                        onChange={(e) => setEditData({ ...editData, nome: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>E-mail</Label>
+                      <Input
+                        type="email"
+                        value={editData.email || ''}
+                        onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
