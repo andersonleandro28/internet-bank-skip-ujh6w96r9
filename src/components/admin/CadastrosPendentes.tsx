@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Check, X, Inbox } from 'lucide-react'
+import { Check, X, Inbox, FileText } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -178,15 +179,24 @@ export function CadastrosPendentes() {
                 </div>
 
                 {u.status === 'pendente' && (
-                  <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                  <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0 flex-wrap sm:flex-nowrap">
                     <Button
-                      className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white transition-colors h-11 px-6 shadow-sm"
+                      variant="outline"
+                      className="flex-1 sm:flex-none h-11 px-6 shadow-sm order-3 sm:order-1 w-full sm:w-auto"
+                      asChild
+                    >
+                      <Link to={`/admin/clientes/${u.id}`}>
+                        <FileText className="w-5 h-5 mr-2" /> Ver Detalhes
+                      </Link>
+                    </Button>
+                    <Button
+                      className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white transition-colors h-11 px-6 shadow-sm order-2"
                       onClick={() => handleReprovar(u.id)}
                     >
                       <X className="w-5 h-5 mr-2" /> Reprovar
                     </Button>
                     <Button
-                      className="flex-1 sm:flex-none bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors h-11 px-6 shadow-sm"
+                      className="flex-1 sm:flex-none bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors h-11 px-6 shadow-sm order-1 sm:order-3"
                       onClick={() => handleAprovar(u.id)}
                     >
                       <Check className="w-5 h-5 mr-2" /> Aprovar

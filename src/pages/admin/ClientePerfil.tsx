@@ -85,13 +85,84 @@ export default function ClientePerfil() {
     }
   }
 
-  const formatUrl = (u: string) => {
-    if (!u) return ''
-    if (u.startsWith('http')) return u
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL
-    const path = u.startsWith('/') ? u.substring(1) : u
-    if (path.includes('storage/v1/')) return `${baseUrl}/${path}`
-    return `${baseUrl}/storage/v1/object/public/${path}`
+  const DocumentLink = ({
+    url,
+    label,
+    icon,
+    index,
+  }: {
+    url: string
+    label: string
+    icon: React.ReactNode
+    index: number
+  }) => {
+    const [signedUrl, setSignedUrl] = useState<string>('')
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+      const getUrl = async () => {
+        try {
+          if (url.startsWith('http')) {
+            setSignedUrl(url)
+            return
+          }
+
+          let cleanPath = url.startsWith('/') ? url.substring(1) : url
+
+          if (cleanPath.includes('storage/v1/object/public/')) {
+            cleanPath = cleanPath.split('storage/v1/object/public/')[1]
+          } else if (cleanPath.includes('storage/v1/object/sign/')) {
+            cleanPath = cleanPath.split('storage/v1/object/sign/')[1]
+          }
+
+          const pathParts = cleanPath.split('/')
+          const bucket = pathParts[0]
+          const filePath = pathParts.slice(1).join('/')
+
+          if (bucket && filePath) {
+            const { data, error } = await supabase.storage
+              .from(bucket)
+              .createSignedUrl(filePath, 3600)
+            if (!error && data) {
+              setSignedUrl(data.signedUrl)
+              return
+            }
+          }
+
+          // Fallback para URL pública
+          const baseUrl = import.meta.env.VITE_SUPABASE_URL
+          if (url.includes('storage/v1/')) {
+            setSignedUrl(`${baseUrl}/${cleanPath}`)
+          } else {
+            setSignedUrl(`${baseUrl}/storage/v1/object/public/${cleanPath}`)
+          }
+        } catch (err) {
+          console.error(err)
+        } finally {
+          setLoading(false)
+        }
+      }
+      getUrl()
+    }, [url])
+
+    if (loading) {
+      return (
+        <span className="text-sm text-slate-500 flex items-center gap-2">
+          {icon} Carregando {label}...
+        </span>
+      )
+    }
+
+    return (
+      <a
+        href={signedUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
+      >
+        {icon} {label} {index > 0 ? index + 1 : ''}
+      </a>
+    )
   }
 
   const renderDocumentLinks = (urlData: string | null, label: string, icon: React.ReactNode) => {
@@ -101,15 +172,7 @@ export default function ClientePerfil() {
     return (
       <div className="space-y-2 mt-2">
         {urls.map((u, i) => (
-          <a
-            key={i}
-            href={formatUrl(u)}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-          >
-            {icon} {urls.length > 1 ? `${label} ${i + 1}` : label}
-          </a>
+          <DocumentLink key={i} url={u} label={label} icon={icon} index={urls.length > 1 ? i : 0} />
         ))}
       </div>
     )
