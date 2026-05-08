@@ -21,6 +21,7 @@ import Depositar from './pages/admin/Depositar'
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AdminRoute } from '@/components/AdminRoute'
 
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
@@ -47,10 +48,14 @@ const App = () => (
               <Route path="/transferir" element={<Transfer />} />
               <Route path="/pagar-boleto" element={<Boleto />} />
               <Route path="/carregar" element={<Carregar />} />
-              <Route path="/admin/painel" element={<Painel />} />
-              <Route path="/admin/configuracoes-taxas" element={<ConfiguracoesTaxas />} />
-              <Route path="/admin/gerenciar-cestas" element={<GerenciarCestas />} />
-              <Route path="/admin/depositar" element={<Depositar />} />
+
+              {/* Admin Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/painel" element={<Painel />} />
+                <Route path="/admin/configuracoes-taxas" element={<ConfiguracoesTaxas />} />
+                <Route path="/admin/gerenciar-cestas" element={<GerenciarCestas />} />
+                <Route path="/admin/depositar" element={<Depositar />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<NotFound />} />

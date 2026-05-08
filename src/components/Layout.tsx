@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -11,6 +12,7 @@ import {
   Wallet,
   User,
   CheckSquare,
+  CircleDollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -27,14 +29,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { MobileNav } from '@/components/mobile-nav'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 
-const menuItems = [
+const baseMenuItems = [
   { icon: Home, label: 'Início', path: '/' },
   { icon: FileText, label: 'Extrato', path: '/extrato' },
   { icon: ArrowLeftRight, label: 'Transferências & PIX', path: '/transferir' },
   { icon: Wallet, label: 'Pagamentos', path: '/pagar-boleto' },
   { icon: CreditCard, label: 'Cartões', path: '/carregar' },
+]
+
+const adminMenuItems = [
   { icon: CheckSquare, label: 'Aprovações', path: '/admin/painel' },
+  { icon: CircleDollarSign, label: 'Depósitos', path: '/admin/depositar' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes-taxas' },
 ]
 
@@ -42,6 +49,22 @@ export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('usuarios')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          setIsAdmin(data?.role === 'admin')
+        })
+    }
+  }, [user])
+
+  const menuItems = isAdmin ? [...baseMenuItems, ...adminMenuItems] : baseMenuItems
 
   const userFirstName =
     user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'
