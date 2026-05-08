@@ -167,7 +167,7 @@ export default function Transfer() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white pb-20 animate-fade-in">
-      <div className="bg-[#8B5CF6] text-white p-4 flex items-center gap-3">
+      <div className="bg-primary text-primary-foreground p-4 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
           className="p-1 hover:bg-white/10 rounded-full transition-colors"
@@ -183,7 +183,7 @@ export default function Transfer() {
             <TabsTrigger
               key={t}
               value={t}
-              className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-[#8B5CF6] data-[state=active]:text-[#8B5CF6] text-gray-500 py-3 font-medium transition-colors"
+              className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-gray-500 py-3 font-medium transition-colors"
             >
               {t}
             </TabsTrigger>
@@ -197,12 +197,12 @@ export default function Transfer() {
             value={pixKey}
             onChange={(e) => setPixKey(e.target.value)}
             placeholder="Chave PIX (CPF, e-mail, celular...)"
-            className="border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+            className="border-gray-200 focus-visible:ring-primary p-3 h-12"
           />
         ) : (
           <div className="flex flex-col gap-4">
             <Select value={tedBank} onValueChange={setTedBank}>
-              <SelectTrigger className="h-12 border-gray-200 focus:ring-[#8B5CF6]">
+              <SelectTrigger className="h-12 border-gray-200 focus:ring-primary">
                 <SelectValue placeholder="Banco" />
               </SelectTrigger>
               <SelectContent>
@@ -219,13 +219,13 @@ export default function Transfer() {
                 value={tedAgency}
                 onChange={(e) => setTedAgency(e.target.value)}
                 placeholder="Agência"
-                className="flex-1 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+                className="flex-1 border-gray-200 focus-visible:ring-primary p-3 h-12"
               />
               <Input
                 value={tedAccount}
                 onChange={(e) => setTedAccount(e.target.value)}
                 placeholder="Conta"
-                className="flex-1 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+                className="flex-1 border-gray-200 focus-visible:ring-primary p-3 h-12"
               />
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function Transfer() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nome do favorecido"
-          className="border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12"
+          className="border-gray-200 focus-visible:ring-primary p-3 h-12"
         />
 
         <div className="relative">
@@ -246,7 +246,7 @@ export default function Transfer() {
             value={amountStr}
             onChange={handleAmount}
             placeholder="0,00"
-            className="pl-10 border-gray-200 focus-visible:ring-[#8B5CF6] p-3 h-12 font-medium text-lg"
+            className="pl-10 border-gray-200 focus-visible:ring-primary p-3 h-12 font-medium text-lg"
           />
         </div>
 
@@ -272,9 +272,9 @@ export default function Transfer() {
               <div
                 key={fav.id}
                 onClick={() => fillFav(fav)}
-                className="min-w-[220px] flex-shrink-0 bg-white border border-gray-200 hover:border-[#8B5CF6] rounded-xl p-3 flex flex-col gap-1 snap-start cursor-pointer relative group transition-colors"
+                className="min-w-[220px] flex-shrink-0 bg-white border border-gray-200 hover:border-primary rounded-xl p-3 flex flex-col gap-1 snap-start cursor-pointer relative group transition-colors"
               >
-                <span className="text-xs font-bold text-[#8B5CF6]">{fav.tipo}</span>
+                <span className="text-xs font-bold text-primary">{fav.tipo}</span>
                 <span className="font-medium text-sm text-gray-800 truncate pr-6">{fav.nome}</span>
                 <span className="text-xs text-gray-500 truncate">
                   {fav.tipo === 'PIX' ? fav.chave_pix : `${fav.banco} - Ag: ${fav.agencia}`}
@@ -301,20 +301,20 @@ export default function Transfer() {
         </div>
         <div className="flex justify-between text-sm items-center">
           <span className="text-gray-600">Taxa</span>
-          <Badge className="bg-[#8B5CF6] text-white hover:bg-[#8B5CF6]">
+          <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
             {formatCurrency(taxa)}
           </Badge>
         </div>
         <div className="flex justify-between font-semibold pt-2 border-t border-gray-200">
           <span className="text-gray-800">Total a debitar</span>
-          <span className="text-[#8B5CF6]">{formatCurrency(total)}</span>
+          <span className="text-primary">{formatCurrency(total)}</span>
         </div>
       </div>
 
       <Button
         onClick={handleTransfer}
         disabled={!isFormValid || loading || total > (conta?.saldo || 0)}
-        className="mx-4 mb-6 h-14 bg-[#8B5CF6] hover:bg-[#7c3aed] text-white rounded-xl text-base font-medium disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+        className="mx-4 mb-6 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-base font-medium disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
       >
         {loading
           ? 'Processando...'

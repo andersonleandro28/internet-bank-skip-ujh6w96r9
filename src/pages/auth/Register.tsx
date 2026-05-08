@@ -290,7 +290,7 @@ export default function Register() {
             <CardContent className="space-y-4 px-0">
               <button
                 onClick={() => handleTipoSelect('PF')}
-                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all duration-300 group bg-white"
+                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-lg hover:shadow-primary/15 transition-all duration-300 group bg-white"
               >
                 <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors mr-5 shrink-0">
                   <User className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
@@ -305,7 +305,7 @@ export default function Register() {
 
               <button
                 onClick={() => handleTipoSelect('PJ')}
-                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)] transition-all duration-300 group bg-white"
+                className="w-full flex items-center p-5 border border-slate-200 rounded-2xl hover:border-primary hover:shadow-lg hover:shadow-primary/15 transition-all duration-300 group bg-white"
               >
                 <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors mr-5 shrink-0">
                   <Building2 className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />

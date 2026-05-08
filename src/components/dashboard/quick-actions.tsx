@@ -20,7 +20,7 @@ const actions = [
     path: '/pagar-boleto',
     color: 'bg-amber-100 text-amber-700',
   },
-  { icon: Smartphone, label: 'Cartões', path: '/carregar', color: 'bg-purple-100 text-purple-700' },
+  { icon: Smartphone, label: 'Cartões', path: '/carregar', color: 'bg-primary/10 text-primary' },
   { icon: Landmark, label: 'Investir', path: '#', color: 'bg-indigo-100 text-indigo-700' },
   { icon: Plus, label: 'Mais', path: '#', color: 'bg-slate-100 text-slate-700' },
 ]

@@ -183,7 +183,7 @@ export default function Carregar() {
 
   return (
     <div className="min-h-screen bg-white font-sans pb-24">
-      <header className="bg-[#8B5CF6] text-white p-4 sticky top-0 z-10 flex items-center shadow-sm">
+      <header className="bg-primary text-primary-foreground p-4 sticky top-0 z-10 flex items-center shadow-sm">
         <Link to="/" className="mr-4 p-2 hover:bg-white/20 rounded-full transition-colors">
           <ChevronLeft className="w-6 h-6" />
         </Link>
@@ -203,7 +203,7 @@ export default function Carregar() {
               placeholder="0.00"
               value={valorBrl}
               onChange={(e) => setValorBrl(e.target.value)}
-              className="pl-12 py-6 text-lg border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl bg-white"
+              className="pl-12 py-6 text-lg border-slate-300 focus-visible:ring-primary rounded-xl bg-white"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function Carregar() {
         {loadingRate || !cotacaoBrl ? (
           <Skeleton className="h-36 w-full rounded-xl" />
         ) : (
-          <div className="bg-gradient-to-r from-[#8B5CF6] to-[#7c3aed] text-white rounded-xl p-4 shadow-md">
+          <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl p-4 shadow-md">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-white/90">Cotação Atual (Tempo Real)</span>
               <RefreshCcw className="w-4 h-4 text-white/90 animate-[spin_3s_linear_infinite]" />
@@ -225,7 +225,7 @@ export default function Carregar() {
             </div>
             <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
               <span className="text-sm text-white/90">Spread Administrativo</span>
-              <span className="bg-white text-[#8B5CF6] text-xs px-2.5 py-1 rounded-md font-bold">
+              <span className="bg-white text-primary text-xs px-2.5 py-1 rounded-md font-bold">
                 {spread}%
               </span>
             </div>
@@ -251,7 +251,7 @@ export default function Carregar() {
               placeholder="0x..."
               value={hashCripto}
               onChange={(e) => setHashCripto(e.target.value)}
-              className="pl-12 py-6 border-slate-300 focus-visible:ring-[#8B5CF6] rounded-xl font-mono text-sm bg-white"
+              className="pl-12 py-6 border-slate-300 focus-visible:ring-primary rounded-xl font-mono text-sm bg-white"
             />
           </div>
         </div>
@@ -301,7 +301,7 @@ export default function Carregar() {
             </div>
             <div className="flex justify-between text-sm items-center">
               <span className="text-slate-500">Taxa de Serviço</span>
-              <span className="bg-[#8B5CF6] text-white text-xs px-2 py-0.5 rounded-md font-medium">
+              <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-md font-medium">
                 R$ {taxaBrl.toFixed(2)}
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function Carregar() {
         <Button
           onClick={handleCarregar}
           disabled={submitting || !cotacaoBrl || numValor <= 0 || !hashCripto || !rede}
-          className="w-full mt-2 py-6 text-base bg-[#8B5CF6] hover:bg-[#7c3aed] disabled:bg-slate-300 disabled:text-slate-500 text-white transition-colors rounded-xl font-semibold shadow-sm"
+          className="w-full mt-2 py-6 text-base bg-primary hover:bg-primary/90 disabled:bg-slate-300 disabled:text-slate-500 text-primary-foreground transition-colors rounded-xl font-semibold shadow-sm"
         >
           {submitting ? 'Processando...' : 'Carregar USDT'}
         </Button>

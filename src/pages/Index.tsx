@@ -92,7 +92,7 @@ export default function Index() {
   return (
     <div className="flex flex-col flex-1 w-full max-w-md mx-auto">
       {/* Balance Card */}
-      <div className="bg-gradient-to-r from-primary to-[#7c3aed] text-white p-6 m-5 rounded-[16px] shadow-lg animate-fade-in-up">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 m-5 rounded-[16px] shadow-lg animate-fade-in-up">
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm font-medium text-white/90">Saldo disponível</p>
           <button

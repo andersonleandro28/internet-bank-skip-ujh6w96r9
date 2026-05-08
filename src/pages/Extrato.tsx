@@ -141,7 +141,7 @@ export default function Extrato() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] bg-slate-50 pb-24 font-sans animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4 p-4 bg-[#8B5CF6] text-white sticky top-0 z-20 shadow-sm">
+      <div className="flex items-center gap-4 p-4 bg-primary text-primary-foreground sticky top-0 z-20 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -165,8 +165,8 @@ export default function Extrato() {
               className={cn(
                 'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
                 tipoFiltro === tipo
-                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary',
               )}
             >
               {tipo}
@@ -181,8 +181,8 @@ export default function Extrato() {
               className={cn(
                 'px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
                 periodoFiltro === per.days
-                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary',
               )}
             >
               {per.label}
@@ -221,7 +221,7 @@ export default function Extrato() {
             <Button
               onClick={fetchData}
               variant="outline"
-              className="text-[#8B5CF6] border-[#8B5CF6] hover:bg-purple-50"
+              className="text-primary border-primary hover:bg-primary/5"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Tentar novamente
@@ -248,7 +248,7 @@ export default function Extrato() {
                     <div
                       className={cn(
                         'w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-slate-50/80',
-                        tx.source === 'deposito' ? 'text-blue-500' : 'text-[#8B5CF6]',
+                        tx.source === 'deposito' ? 'text-blue-500' : 'text-primary',
                       )}
                     >
                       {tx.source === 'deposito' ? (
@@ -316,7 +316,7 @@ export default function Extrato() {
             <Button
               variant="outline"
               onClick={() => setPage((p) => p + 1)}
-              className="w-full rounded-full text-[#8B5CF6] border-[#8B5CF6] hover:bg-purple-50 hover:text-[#8B5CF6] py-6 text-base font-medium transition-colors"
+              className="w-full rounded-full text-primary border-primary hover:bg-primary/5 hover:text-primary py-6 text-base font-medium transition-colors"
             >
               Carregar mais
             </Button>
