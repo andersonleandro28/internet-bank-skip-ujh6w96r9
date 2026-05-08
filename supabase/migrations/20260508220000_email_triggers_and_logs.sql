@@ -148,23 +148,19 @@ BEGIN
     PERFORM cron.schedule(
       'relatorio_mensal_cron',
       '0 8 1 * *',
-      $$
-        SELECT net.http_post(
-          url:='https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_relatorio_mensal',
-          headers:='{"Content-Type": "application/json"}'::jsonb
-        );
-      $$
+      'SELECT net.http_post(
+          url:=''https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_relatorio_mensal'',
+          headers:=''{"Content-Type": "application/json"}''::jsonb
+      );'
     );
 
     PERFORM cron.schedule(
       'retry_emails_pendentes_cron',
       '0 * * * *',
-      $$
-        SELECT net.http_post(
-          url:='https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/retry_emails_pendentes',
-          headers:='{"Content-Type": "application/json"}'::jsonb
-        );
-      $$
+      'SELECT net.http_post(
+          url:=''https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/retry_emails_pendentes'',
+          headers:=''{"Content-Type": "application/json"}''::jsonb
+      );'
     );
   END IF;
 EXCEPTION WHEN OTHERS THEN
