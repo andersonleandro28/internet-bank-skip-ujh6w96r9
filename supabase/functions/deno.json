@@ -7,6 +7,7 @@
     "enviar_relatorio_mensal": 3,
     "retry_emails_pendentes": 3,
     "testar_resend": 1,
-    "testar_resend_detalhado": 1
+    "testar_resend_detalhado": 1,
+    "testar_api_key": 1
   }
 }
