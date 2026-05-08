@@ -62,6 +62,34 @@ export const getSpreadUSDT = async () => {
   return taxa?.percentual || 0
 }
 
+export const getLimiteAlertaSaldo = async () => {
+  const { data } = await supabase
+    .from('usuarios')
+    .select('limite_alerta_saldo' as any)
+    .eq('role', 'admin')
+    .limit(1)
+    .single()
+
+  return (data as any)?.limite_alerta_saldo ?? 500
+}
+
+export const updateLimiteAlertaSaldo = async (limite: number, adminId: string) => {
+  const { error } = await supabase
+    .from('usuarios')
+    .update({ limite_alerta_saldo: limite } as any)
+    .not('id', 'is', null)
+
+  if (error) throw error
+
+  await supabase.from('auditoria').insert({
+    admin_id: adminId,
+    acao: 'atualizou_limite_alerta_saldo',
+    tabela: 'usuarios',
+    registro_id: adminId,
+    taxa_aplicada: limite,
+  })
+}
+
 export const updateSpreadUSDT = async (percentual: number, adminId: string) => {
   const { data: servico } = await supabase
     .from('servicos')

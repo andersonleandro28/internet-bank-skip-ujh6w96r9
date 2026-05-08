@@ -3,6 +3,7 @@
     "send-welcome-email": 1,
     "notify-requisicao": 1,
     "notify-deposito": 1,
-    "relatorio-mensal": 1
+    "relatorio-mensal": 1,
+    "notify-alerta-saldo": 1
   }
 }

@@ -6,6 +6,8 @@ import {
   getHistoricoLogins,
   getSpreadUSDT,
   updateSpreadUSDT,
+  getLimiteAlertaSaldo,
+  updateLimiteAlertaSaldo,
 } from '@/services/perfil'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +43,8 @@ export default function Perfil() {
   const [historico, setHistorico] = useState<any[]>([])
 
   const [spreadUSDT, setSpreadUSDT] = useState<number>(0)
-  const [savingSpread, setSavingSpread] = useState(false)
+  const [limiteAlerta, setLimiteAlerta] = useState<number>(500)
+  const [savingConfigs, setSavingConfigs] = useState(false)
 
   const loadData = async () => {
     if (!user) return
@@ -56,6 +59,8 @@ export default function Perfil() {
       if (usuario.role === 'admin') {
         const spread = await getSpreadUSDT()
         setSpreadUSDT(spread)
+        const limite = await getLimiteAlertaSaldo()
+        setLimiteAlerta(limite)
       } else {
         const hist = await getHistoricoLogins(user.id)
         setHistorico(hist)
@@ -77,24 +82,25 @@ export default function Perfil() {
     navigate('/login')
   }
 
-  const handleSaveSpread = async () => {
+  const handleSaveConfigs = async () => {
     if (!user) return
     try {
-      setSavingSpread(true)
+      setSavingConfigs(true)
       await updateSpreadUSDT(spreadUSDT, user.id)
+      await updateLimiteAlertaSaldo(limiteAlerta, user.id)
       toast({
         title: 'Sucesso',
-        description: 'Configuração salva com sucesso.',
+        description: 'Configurações salvas com sucesso.',
       })
     } catch (err: any) {
       toast({
         title: 'Erro',
-        description: 'Não foi possível salvar a configuração.',
+        description: 'Não foi possível salvar as configurações.',
         variant: 'destructive',
       })
       console.error(err)
     } finally {
-      setSavingSpread(false)
+      setSavingConfigs(false)
     }
   }
 
@@ -163,21 +169,35 @@ export default function Perfil() {
               <CardDescription>Ajuste os parâmetros gerais do sistema.</CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="spread">Spread USDT (%)</Label>
-                <Input
-                  id="spread"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={spreadUSDT}
-                  onChange={(e) => setSpreadUSDT(Number(e.target.value))}
-                  className="text-lg"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="spread">Spread USDT (%)</Label>
+                  <Input
+                    id="spread"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={spreadUSDT}
+                    onChange={(e) => setSpreadUSDT(Number(e.target.value))}
+                    className="text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="limite_alerta">Limite de Alerta de Saldo (R$)</Label>
+                  <Input
+                    id="limite_alerta"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={limiteAlerta}
+                    onChange={(e) => setLimiteAlerta(Number(e.target.value))}
+                    className="text-lg"
+                  />
+                </div>
               </div>
-              <Button onClick={handleSaveSpread} disabled={savingSpread} className="w-full">
-                {savingSpread ? 'Salvando...' : 'Salvar'}
+              <Button onClick={handleSaveConfigs} disabled={savingConfigs} className="w-full">
+                {savingConfigs ? 'Salvando...' : 'Salvar Configurações'}
               </Button>
             </CardContent>
           </Card>
