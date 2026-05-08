@@ -244,6 +244,7 @@ export type Database = {
           created_at: string
           hash_cripto: string | null
           id: string
+          metadados: Json | null
           processed_at: string | null
           processed_by: string | null
           rede: string | null
@@ -253,12 +254,12 @@ export type Database = {
           user_id: string
           valor: number
           valor_total: number
-          metadados: Json | null
         }
         Insert: {
           created_at?: string
           hash_cripto?: string | null
           id?: string
+          metadados?: Json | null
           processed_at?: string | null
           processed_by?: string | null
           rede?: string | null
@@ -268,12 +269,12 @@ export type Database = {
           user_id: string
           valor: number
           valor_total: number
-          metadados?: Json | null
         }
         Update: {
           created_at?: string
           hash_cripto?: string | null
           id?: string
+          metadados?: Json | null
           processed_at?: string | null
           processed_by?: string | null
           rede?: string | null
@@ -283,7 +284,6 @@ export type Database = {
           user_id?: string
           valor?: number
           valor_total?: number
-          metadados?: Json | null
         }
         Relationships: [
           {

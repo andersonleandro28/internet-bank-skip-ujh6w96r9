@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
+import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -46,11 +47,8 @@ export default function Login() {
 
       <div className="w-full max-w-md animate-fade-in-up">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2 font-bold text-2xl text-primary">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xl">
-              N
-            </div>
-            NovaBank
+          <div className="bg-black/95 p-5 rounded-2xl shadow-xl">
+            <img src={logoAclop} alt="ACLOP Bank" className="h-14 object-contain" />
           </div>
         </div>
 

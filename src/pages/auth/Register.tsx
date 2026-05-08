@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
 
 type TipoConta = 'PF' | 'PJ' | null
 
@@ -271,12 +272,9 @@ export default function Register() {
           <div className="flex justify-center mb-10">
             <Link
               to="/"
-              className="flex items-center gap-2 font-bold text-3xl text-slate-800 tracking-tight"
+              className="bg-black/95 p-5 rounded-2xl shadow-xl hover:scale-105 transition-transform"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white text-xl">
-                N
-              </div>
-              NovaBank
+              <img src={logoAclop} alt="ACLOP Bank" className="h-16 object-contain" />
             </Link>
           </div>
 

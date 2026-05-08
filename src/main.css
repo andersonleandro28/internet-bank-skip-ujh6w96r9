@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 258 90% 66%; /* #8B5CF6 - Roxo */
+    --primary: 116 100% 40%; /* Verde ACLOP */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 5% 96%;
@@ -24,7 +24,7 @@
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
 
-    --accent: 258 90% 66%;
+    --accent: 116 100% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -32,18 +32,18 @@
 
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 258 90% 66%;
+    --ring: 116 100% 40%;
 
     --radius: 0.75rem; /* 12px border-radius */
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary: 116 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 5% 96%;
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 258 90% 66%;
+    --sidebar-ring: 116 100% 40%;
 
     --chart-1: 160 84% 39%;
     --chart-2: 222.2 47.4% 11.2%;
@@ -59,27 +59,27 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
-    --primary: 258 90% 66%;
+    --primary: 116 100% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 215.3 25% 26.7%;
     --secondary-foreground: 210 40% 98%;
     --muted: 215.3 25% 26.7%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 258 90% 66%;
+    --accent: 116 100% 40%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 215.3 25% 26.7%;
     --input: 215.3 25% 26.7%;
-    --ring: 258 90% 66%;
+    --ring: 116 100% 40%;
     --sidebar-background: 222.2 47.4% 11.2%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary: 116 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 215.3 25% 26.7%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 215.3 25% 26.7%;
-    --sidebar-ring: 258 90% 66%;
+    --sidebar-ring: 116 100% 40%;
   }
 
   * {

@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input'
 import { MobileNav } from '@/components/mobile-nav'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
+import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
 
 const baseMenuItems = [
   { icon: Home, label: 'Início', path: '/' },
@@ -81,11 +82,8 @@ export default function Layout() {
       <div className="flex min-h-screen w-full bg-white">
         <Sidebar className="hidden md:flex border-r-slate-200">
           <SidebarHeader className="p-6">
-            <div className="flex items-center gap-2 font-bold text-xl text-primary">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-                N
-              </div>
-              NovaBank
+            <div className="flex items-center justify-center bg-black/95 rounded-xl p-3">
+              <img src={logoAclop} alt="ACLOP Bank" className="h-10 object-contain" />
             </div>
           </SidebarHeader>
           <SidebarContent className="px-4">
@@ -137,7 +135,7 @@ export default function Layout() {
             <div className="flex items-center w-full gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  NB
+                  AB
                 </div>
                 <span className="font-medium text-slate-800 md:hidden">Olá, {userFirstName}</span>
               </div>
