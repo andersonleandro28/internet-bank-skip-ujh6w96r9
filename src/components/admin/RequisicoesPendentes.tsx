@@ -45,7 +45,7 @@ export function RequisicoesPendentes() {
         .from('requisicoes')
         .select(`
           id, tipo, valor, taxa_aplicada, valor_total, status, created_at,
-          usuarios(
+          usuarios!requisicoes_user_id_fkey(
             tipo,
             usuarios_pf(nome),
             usuarios_pj(razao_social)
