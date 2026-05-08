@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Eye, EyeOff, Search, ArrowDownCircle, CheckCircle } from 'lucide-react'
+import {
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  Search,
+  ArrowDownCircle,
+  CheckCircle,
+  CircleDollarSign,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Command,
@@ -195,23 +202,25 @@ export default function Depositar() {
         <h1 className="text-xl font-medium tracking-tight">Depositar Saldo</h1>
       </header>
 
-      <main className="p-4 max-w-xl mx-auto space-y-6">
+      <main className="max-w-xl mx-auto pb-6">
         {loading ? (
-          <div className="space-y-4">
+          <div className="p-4 space-y-4">
             <Skeleton className="h-12 w-full rounded-xl" />
             <Skeleton className="h-48 w-full rounded-xl" />
           </div>
         ) : (
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-5">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Selecionar cliente</Label>
+          <>
+            <div className="m-4">
+              <Label className="text-sm font-medium text-gray-700 block mb-2">
+                Selecionar cliente
+              </Label>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between border-gray-200 focus:border-[#8B5CF6] focus:ring-[#8B5CF6] h-12 px-4"
+                    className="w-full justify-between bg-white border-gray-200 focus:border-[#8B5CF6] focus:ring-[#8B5CF6] h-12 p-3 rounded-xl"
                   >
                     <span className="truncate">
                       {selectedCliente ? selectedCliente.nome : 'Buscar por nome ou e-mail...'}
@@ -220,7 +229,7 @@ export default function Depositar() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                  className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl"
                   align="start"
                 >
                   <Command>
@@ -236,7 +245,7 @@ export default function Depositar() {
                               setClienteId(cliente.id)
                               setOpen(false)
                             }}
-                            className="flex flex-col items-start py-2 cursor-pointer"
+                            className="flex flex-col items-start py-3 cursor-pointer"
                           >
                             <span className="font-medium text-gray-900">{cliente.nome}</span>
                             <span className="text-xs text-gray-500">{cliente.email}</span>
@@ -250,9 +259,14 @@ export default function Depositar() {
             </div>
 
             {clienteId ? (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
+              <section className="bg-gray-50 rounded-[12px] p-4 m-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-col items-center mb-6">
+                  <CircleDollarSign size={32} className="text-[#8B5CF6] mb-2" />
+                  <h2 className="text-lg font-medium text-gray-800">Novo Depósito</h2>
+                </div>
+
+                <div className="mb-3">
+                  <Label className="text-sm font-medium text-gray-700 block mb-1">
                     Valor a depositar (R$)
                   </Label>
                   <Input
@@ -260,24 +274,26 @@ export default function Depositar() {
                     placeholder="0.00"
                     value={valor}
                     onChange={(e) => setValor(e.target.value)}
-                    className="h-12 text-lg border-gray-200 focus-visible:ring-[#8B5CF6]"
+                    className="h-12 p-3 text-lg border-gray-200 focus-visible:ring-[#8B5CF6] focus-visible:border-[#8B5CF6] bg-white rounded-xl transition-colors"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Senha de confirmação</Label>
+                <div className="mb-3">
+                  <Label className="text-sm font-medium text-gray-700 block mb-1">
+                    Senha de confirmação
+                  </Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Sua senha de admin"
                       value={senha}
                       onChange={(e) => setSenha(e.target.value)}
-                      className="h-12 border-gray-200 focus-visible:ring-[#8B5CF6] pr-10"
+                      className="h-12 p-3 border-gray-200 focus-visible:ring-[#8B5CF6] focus-visible:border-[#8B5CF6] pr-10 bg-white rounded-xl transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B5CF6] hover:text-[#7C3AED] focus:outline-none transition-colors"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -287,24 +303,27 @@ export default function Depositar() {
                 <Button
                   onClick={handleConfirm}
                   disabled={submitting}
-                  className="w-full h-12 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium text-lg rounded-xl mt-4 transition-colors"
+                  className="w-full h-12 mt-5 bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-gray-300 disabled:text-gray-500 text-white font-medium text-lg rounded-xl transition-colors"
                 >
                   {submitting ? 'Confirmando...' : 'Confirmar depósito'}
                 </Button>
-              </div>
+              </section>
             ) : (
-              <div className="py-6 flex justify-center items-center">
+              <div className="py-10 flex flex-col items-center justify-center m-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <Search size={32} className="mb-2 text-gray-400 opacity-50" />
                 <p className="text-sm text-gray-500">Selecione um cliente para continuar.</p>
               </div>
             )}
-          </section>
+          </>
         )}
 
-        <section className="space-y-4 pt-4">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-800">Depósitos recentes</h2>
+        <section className="m-4 mt-8">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-800 mb-4">
+            Depósitos recentes
+          </h2>
 
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-20 w-full rounded-xl" />
               ))}
@@ -315,42 +334,40 @@ export default function Depositar() {
               <p className="text-sm">Nenhum depósito recente.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {depositos.map((deposito) => (
-                <Card
+                <div
                   key={deposito.id}
-                  className="overflow-hidden shadow-sm border border-gray-100 border-l-4 border-l-[#10B981]"
+                  className="bg-white shadow-sm border border-gray-100 border-l-4 border-l-[#10B981] rounded-xl p-3 flex items-center justify-between"
                 >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-[#10B981]" />
-                        <p className="font-medium text-gray-900 leading-none">
-                          {deposito.cliente_nome}
-                        </p>
-                      </div>
-                      <p className="text-xs text-gray-500 ml-6">
-                        {new Date(deposito.created_at).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                      <p className="text-xs text-gray-400 ml-6">por {deposito.admin_nome}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-[#10B981]">
-                        +{' '}
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(deposito.valor)}
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle size={16} className="text-[#10B981]" />
+                      <p className="font-medium text-gray-900 leading-none">
+                        {deposito.cliente_nome}
                       </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="text-xs text-gray-500 ml-6">
+                      {new Date(deposito.created_at).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <p className="text-xs text-gray-400 ml-6">por {deposito.admin_nome}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-[#10B981]">
+                      +{' '}
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(deposito.valor)}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
           )}
