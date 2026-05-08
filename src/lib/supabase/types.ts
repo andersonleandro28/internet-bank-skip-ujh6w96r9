@@ -589,6 +589,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user_email: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: undefined
+      }
       aprovar_requisicao: {
         Args: { p_admin_id: string; req_id: string }
         Returns: undefined
@@ -1037,6 +1041,27 @@ export const Constants = {
 //     USING: (user_id = auth.uid())
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION admin_update_user_email(uuid, text)
+//   CREATE OR REPLACE FUNCTION public.admin_update_user_email(p_user_id uuid, p_email text)
+//    RETURNS void
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     IF NOT public.is_admin() THEN
+//       RAISE EXCEPTION 'Acesso negado';
+//     END IF;
+//
+//     UPDATE auth.users
+//     SET email = p_email
+//     WHERE id = p_user_id;
+//
+//     UPDATE public.usuarios
+//     SET email = p_email
+//     WHERE id = p_user_id;
+//   END;
+//   $function$
+//
 // FUNCTION aprovar_requisicao(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.aprovar_requisicao(req_id uuid, p_admin_id uuid)
 //    RETURNS void

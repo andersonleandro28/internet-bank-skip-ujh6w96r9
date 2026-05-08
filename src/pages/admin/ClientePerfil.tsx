@@ -199,46 +199,53 @@ export default function ClientePerfil() {
     icon: React.ReactNode
     index: number
   }) => {
-    const [signedUrl, setSignedUrl] = useState<string>('')
+    const [signedUrl, setSignedUrl] = useState<string>(url)
     const [linkLoading, setLinkLoading] = useState(true)
 
     useEffect(() => {
       const getUrl = async () => {
         try {
-          let cleanPath = url
+          console.log('[DocumentLink] Raw URL:', url)
 
-          try {
-            const urlObj = new URL(url)
-            cleanPath = urlObj.pathname
-          } catch (e) {
-            cleanPath = cleanPath.split('?')[0]
+          if (!url) {
+            setLinkLoading(false)
+            return
           }
 
-          if (cleanPath.includes('storage/v1/object/public/')) {
-            cleanPath = cleanPath.split('storage/v1/object/public/')[1]
-          } else if (cleanPath.includes('storage/v1/object/sign/')) {
-            cleanPath = cleanPath.split('storage/v1/object/sign/')[1]
-          } else if (cleanPath.includes('storage/v1/object/')) {
-            cleanPath = cleanPath.split('storage/v1/object/')[1]
-          } else if (cleanPath.startsWith('/')) {
-            cleanPath = cleanPath.substring(1)
+          let bucket = ''
+          let filePath = ''
+
+          if (url.includes('/storage/v1/object/')) {
+            const matches = url.match(
+              /\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+?)(?:\?|$)/,
+            )
+            if (matches && matches.length === 3) {
+              bucket = matches[1]
+              filePath = matches[2]
+            }
+          } else if (!url.startsWith('http')) {
+            bucket = 'documentos'
+            filePath = url
           }
 
-          const pathParts = cleanPath.split('/')
-          const bucket = pathParts[0]
-          const filePath = pathParts.slice(1).join('/')
+          console.log('[DocumentLink] Parsed:', { bucket, filePath })
 
           if (bucket && filePath) {
+            const decodedPath = decodeURIComponent(filePath)
             const { data, error } = await supabase.storage
               .from(bucket)
-              .createSignedUrl(filePath, 3600)
+              .createSignedUrl(decodedPath, 3600)
+
+            console.log('[DocumentLink] Signed URL response:', { data, error })
 
             if (!error && data?.signedUrl) {
               setSignedUrl(data.signedUrl)
               return
             }
 
-            const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath)
+            const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(decodedPath)
+            console.log('[DocumentLink] Public URL:', publicData)
+
             if (publicData?.publicUrl) {
               setSignedUrl(publicData.publicUrl)
               return
@@ -247,7 +254,7 @@ export default function ClientePerfil() {
 
           setSignedUrl(url)
         } catch (err) {
-          console.error(err)
+          console.error('[DocumentLink] Error:', err)
           setSignedUrl(url)
         } finally {
           setLinkLoading(false)
