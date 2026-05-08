@@ -195,6 +195,47 @@ export type Database = {
           },
         ]
       }
+      emails_log: {
+        Row: {
+          created_at: string | null
+          erro: string | null
+          id: string
+          proxima_tentativa: string | null
+          status: string
+          tentativas: number | null
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          erro?: string | null
+          id?: string
+          proxima_tentativa?: string | null
+          status: string
+          tentativas?: number | null
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          erro?: string | null
+          id?: string
+          proxima_tentativa?: string | null
+          status?: string
+          tentativas?: number | null
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'emails_log_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       emails_pendentes: {
         Row: {
           assunto: string
@@ -202,9 +243,12 @@ export type Database = {
           email: string
           erro: string | null
           id: string
+          payload: Json | null
+          proxima_tentativa: string | null
           status: string | null
           template: string
           tentativas: number | null
+          tipo: string | null
           user_id: string | null
         }
         Insert: {
@@ -213,9 +257,12 @@ export type Database = {
           email: string
           erro?: string | null
           id?: string
+          payload?: Json | null
+          proxima_tentativa?: string | null
           status?: string | null
           template: string
           tentativas?: number | null
+          tipo?: string | null
           user_id?: string | null
         }
         Update: {
@@ -224,9 +271,12 @@ export type Database = {
           email?: string
           erro?: string | null
           id?: string
+          payload?: Json | null
+          proxima_tentativa?: string | null
           status?: string | null
           template?: string
           tentativas?: number | null
+          tipo?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -801,6 +851,15 @@ export const Constants = {
 //   status: text (not null, default: 'pendente'::text)
 //   created_at: timestamp with time zone (not null, default: now())
 //   confirmed_at: timestamp with time zone (nullable)
+// Table: emails_log
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (nullable)
+//   tipo: text (not null)
+//   status: text (not null)
+//   tentativas: integer (nullable, default: 1)
+//   proxima_tentativa: timestamp with time zone (nullable)
+//   erro: text (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
 // Table: emails_pendentes
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (nullable)
@@ -811,6 +870,9 @@ export const Constants = {
 //   erro: text (nullable)
 //   status: text (nullable, default: 'pendente'::text)
 //   created_at: timestamp with time zone (nullable, default: now())
+//   tipo: text (nullable)
+//   payload: jsonb (nullable)
+//   proxima_tentativa: timestamp with time zone (nullable)
 // Table: favorecidos
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -909,6 +971,9 @@ export const Constants = {
 //   FOREIGN KEY depositos_admin_id_fkey: FOREIGN KEY (admin_id) REFERENCES usuarios(id)
 //   PRIMARY KEY depositos_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY depositos_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+// Table: emails_log
+//   PRIMARY KEY emails_log_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY emails_log_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 // Table: emails_pendentes
 //   PRIMARY KEY emails_pendentes_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY emails_pendentes_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
@@ -976,6 +1041,9 @@ export const Constants = {
 //     WITH CHECK: (user_id = auth.uid())
 //   Policy "depositos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
+// Table: emails_log
+//   Policy "admin_all_emails_log" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
 // Table: emails_pendentes
 //   Policy "admin_all_emails_pendentes" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM usuarios   WHERE ((usuarios.id = auth.uid()) AND (usuarios.role = 'admin'::role_usuario))))
@@ -1344,6 +1412,32 @@ export const Constants = {
 //   END;
 //   $function$
 //
+// FUNCTION trigger_enviar_email_confirmacao_cadastro()
+//   CREATE OR REPLACE FUNCTION public.trigger_enviar_email_confirmacao_cadastro()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_email_confirmacao_cadastro';
+//     payload jsonb;
+//   BEGIN
+//     IF TG_OP = 'INSERT' AND NEW.status = 'pendente' THEN
+//       payload := jsonb_build_object(
+//         'type', 'INSERT',
+//         'table', 'usuarios',
+//         'record', row_to_json(NEW)
+//       );
+//       PERFORM net.http_post(
+//           url := edge_function_url,
+//           headers := '{"Content-Type": "application/json"}'::jsonb,
+//           body := payload
+//       );
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 // FUNCTION trigger_notify_alerta_saldo()
 //   CREATE OR REPLACE FUNCTION public.trigger_notify_alerta_saldo()
 //    RETURNS trigger
@@ -1351,7 +1445,7 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   DECLARE
-//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/notify-alerta-saldo';
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_email_alerta_saldo_baixo';
 //     payload jsonb;
 //     v_limite numeric;
 //     v_ultimo timestamptz;
@@ -1368,7 +1462,6 @@ export const Constants = {
 //           'old_record', row_to_json(OLD),
 //           'limite', v_limite
 //         );
-//
 //         PERFORM net.http_post(
 //             url := edge_function_url,
 //             headers := '{"Content-Type": "application/json"}'::jsonb,
@@ -1387,7 +1480,7 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   DECLARE
-//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/notify-deposito';
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_email_deposito_creditado';
 //     payload jsonb;
 //   BEGIN
 //     IF (TG_OP = 'INSERT' AND NEW.status = 'confirmado') OR
@@ -1398,7 +1491,6 @@ export const Constants = {
 //         'record', row_to_json(NEW),
 //         'old_record', CASE WHEN TG_OP = 'UPDATE' THEN row_to_json(OLD) ELSE null END
 //       );
-//
 //       PERFORM net.http_post(
 //           url := edge_function_url,
 //           headers := '{"Content-Type": "application/json"}'::jsonb,
@@ -1416,10 +1508,9 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   DECLARE
-//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/notify-requisicao';
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_email_requisicao_processada';
 //     payload jsonb;
 //   BEGIN
-//     -- Apenas disparar se o status mudou para aprovado ou reprovado
 //     IF OLD.status != NEW.status AND NEW.status IN ('aprovado', 'reprovado') THEN
 //       payload := jsonb_build_object(
 //         'type', 'UPDATE',
@@ -1427,7 +1518,6 @@ export const Constants = {
 //         'record', row_to_json(NEW),
 //         'old_record', row_to_json(OLD)
 //       );
-//
 //       PERFORM net.http_post(
 //           url := edge_function_url,
 //           headers := '{"Content-Type": "application/json"}'::jsonb,
@@ -1450,6 +1540,7 @@ export const Constants = {
 //   on_requisicao_status_change_notify_email: CREATE TRIGGER on_requisicao_status_change_notify_email AFTER UPDATE ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION trigger_notify_requisicao()
 //   on_requisicao_updated: CREATE TRIGGER on_requisicao_updated AFTER UPDATE ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION notify_requisicoes_update()
 // Table: usuarios
+//   on_usuario_inserted_notify: CREATE TRIGGER on_usuario_inserted_notify AFTER INSERT ON public.usuarios FOR EACH ROW EXECUTE FUNCTION trigger_enviar_email_confirmacao_cadastro()
 //   on_usuario_updated: CREATE TRIGGER on_usuario_updated AFTER UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION notify_usuarios_update()
 // Table: usuarios_pf
 //   on_usuario_pf_inserted: CREATE TRIGGER on_usuario_pf_inserted AFTER INSERT ON public.usuarios_pf FOR EACH ROW EXECUTE FUNCTION notify_admin_new_usuario_pf()
