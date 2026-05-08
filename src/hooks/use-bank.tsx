@@ -16,6 +16,7 @@ export interface Requisicao {
   valor_total: number
   status: string
   created_at: string
+  metadados?: any
 }
 
 export interface UsuarioInfo {

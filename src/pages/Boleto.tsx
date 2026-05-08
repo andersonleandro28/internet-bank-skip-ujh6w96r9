@@ -110,6 +110,11 @@ export default function BoletoPage() {
         taxa_aplicada: taxaAplicada,
         valor_total: valorTotal,
         status: 'pendente',
+        metadados: {
+          codigo_barras: codigo,
+          beneficiario: boletoInfo.beneficiario,
+          vencimento: boletoInfo.vencimento,
+        },
       })
 
       if (reqError) throw reqError

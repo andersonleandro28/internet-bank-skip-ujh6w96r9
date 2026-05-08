@@ -159,6 +159,10 @@ export default function Carregar() {
         status: 'pendente',
         hash_cripto: hashCripto,
         rede: rede,
+        metadados: {
+          hash_cripto: hashCripto,
+          rede: rede,
+        },
       })
       if (errReq) throw errReq
 

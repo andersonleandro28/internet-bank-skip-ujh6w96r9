@@ -253,6 +253,7 @@ export type Database = {
           user_id: string
           valor: number
           valor_total: number
+          metadados: Json | null
         }
         Insert: {
           created_at?: string
@@ -267,6 +268,7 @@ export type Database = {
           user_id: string
           valor: number
           valor_total: number
+          metadados?: Json | null
         }
         Update: {
           created_at?: string
@@ -281,6 +283,7 @@ export type Database = {
           user_id?: string
           valor?: number
           valor_total?: number
+          metadados?: Json | null
         }
         Relationships: [
           {
@@ -679,6 +682,7 @@ export const Constants = {
 //   created_at: timestamp with time zone (not null, default: now())
 //   processed_at: timestamp with time zone (nullable)
 //   processed_by: uuid (nullable)
+//   metadados: jsonb (nullable, default: '{}'::jsonb)
 // Table: servicos
 //   id: uuid (not null, default: gen_random_uuid())
 //   nome: text (not null)

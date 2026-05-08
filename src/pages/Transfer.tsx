@@ -103,11 +103,15 @@ export default function Transfer() {
 
     await supabase.from('requisicoes').insert({
       user_id: user.id,
-      tipo: 'transferencia',
+      tipo: tab.toLowerCase(),
       valor: amount,
       taxa_aplicada: taxa,
       valor_total: total,
       status: 'pendente',
+      metadados:
+        tab === 'PIX'
+          ? { chave_pix: pixKey, favorecido: name }
+          : { banco: tedBank, agencia: tedAgency, conta: tedAccount, favorecido: name },
     })
 
     if (saveFavorite) {
