@@ -301,10 +301,10 @@ export default function Register() {
           <div className="flex justify-center mb-10">
             <Link
               to="/"
-              className="bg-black/95 p-5 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
+              className="p-5 hover:scale-105 transition-transform flex items-center gap-3"
             >
               <img src={logoAclop} alt="ACLOP Logo" className="h-16 object-contain" />
-              <span className="text-white font-bold text-3xl tracking-wider">ACLOP</span>
+              <span className="text-slate-900 font-bold text-3xl tracking-wider">ACLOP</span>
             </Link>
           </div>
 

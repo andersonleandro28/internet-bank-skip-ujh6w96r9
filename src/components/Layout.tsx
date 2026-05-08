@@ -87,9 +87,9 @@ export default function Layout() {
       <div className="flex min-h-screen w-full bg-white">
         <Sidebar className="hidden md:flex border-r-slate-200">
           <SidebarHeader className="p-6">
-            <div className="flex items-center justify-center bg-black/95 rounded-xl p-3 gap-2">
+            <div className="flex items-center justify-center p-3 gap-2">
               <img src={logoAclop} alt="ACLOP Logo" className="h-10 object-contain" />
-              <span className="text-white font-bold text-xl tracking-wide">ACLOP</span>
+              <span className="text-slate-900 font-bold text-xl tracking-wide">ACLOP</span>
             </div>
           </SidebarHeader>
           <SidebarContent className="px-4">

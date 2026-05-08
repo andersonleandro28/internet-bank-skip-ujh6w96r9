@@ -53,9 +53,9 @@ export default function Login() {
 
       <div className="w-full max-w-md animate-fade-in-up">
         <div className="flex justify-center mb-8">
-          <div className="bg-black/95 p-5 rounded-2xl shadow-xl flex items-center gap-3">
+          <div className="p-5 flex items-center gap-3">
             <img src={logoAclop} alt="ACLOP Logo" className="h-14 object-contain" />
-            <span className="text-white font-bold text-3xl tracking-wider">ACLOP</span>
+            <span className="text-slate-900 font-bold text-3xl tracking-wider">ACLOP</span>
           </div>
         </div>
 
