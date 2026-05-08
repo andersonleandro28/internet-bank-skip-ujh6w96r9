@@ -474,27 +474,33 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          limite_alerta_saldo: number
           role: Database['public']['Enums']['role_usuario']
           status: Database['public']['Enums']['status_usuario']
           tipo: Database['public']['Enums']['tipo_usuario']
+          ultimo_alerta_saldo: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
           id: string
+          limite_alerta_saldo?: number
           role?: Database['public']['Enums']['role_usuario']
           status?: Database['public']['Enums']['status_usuario']
           tipo?: Database['public']['Enums']['tipo_usuario']
+          ultimo_alerta_saldo?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          limite_alerta_saldo?: number
           role?: Database['public']['Enums']['role_usuario']
           status?: Database['public']['Enums']['status_usuario']
           tipo?: Database['public']['Enums']['tipo_usuario']
+          ultimo_alerta_saldo?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -862,6 +868,8 @@ export const Constants = {
 //   role: role_usuario (not null, default: 'cliente'::role_usuario)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+//   limite_alerta_saldo: numeric (not null, default: 500)
+//   ultimo_alerta_saldo: timestamp with time zone (nullable)
 // Table: usuarios_pf
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -1110,14 +1118,23 @@ export const Constants = {
 //    LANGUAGE plpgsql
 //    SECURITY DEFINER
 //   AS $function$
+//   DECLARE
+//     v_limite numeric;
 //   BEGIN
-//     INSERT INTO public.usuarios (id, email, role, status, tipo)
+//     -- Tenta pegar o limite configurado do admin
+//     SELECT limite_alerta_saldo INTO v_limite FROM public.usuarios WHERE role = 'admin' LIMIT 1;
+//     IF v_limite IS NULL THEN
+//       v_limite := 500;
+//     END IF;
+//
+//     INSERT INTO public.usuarios (id, email, role, status, tipo, limite_alerta_saldo)
 //     VALUES (
 //       NEW.id,
 //       NEW.email,
 //       'cliente',
 //       'pendente',
-//       COALESCE((NEW.raw_user_meta_data->>'tipo'), 'PF')::public.tipo_usuario
+//       COALESCE((NEW.raw_user_meta_data->>'tipo'), 'PF')::public.tipo_usuario,
+//       v_limite
 //     )
 //     ON CONFLICT (id) DO UPDATE SET
 //       status = 'pendente',
@@ -1327,6 +1344,42 @@ export const Constants = {
 //   END;
 //   $function$
 //
+// FUNCTION trigger_notify_alerta_saldo()
+//   CREATE OR REPLACE FUNCTION public.trigger_notify_alerta_saldo()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/notify-alerta-saldo';
+//     payload jsonb;
+//     v_limite numeric;
+//     v_ultimo timestamptz;
+//   BEGIN
+//     IF TG_OP = 'UPDATE' AND NEW.saldo < OLD.saldo THEN
+//       SELECT limite_alerta_saldo, ultimo_alerta_saldo INTO v_limite, v_ultimo
+//       FROM public.usuarios WHERE id = NEW.user_id;
+//
+//       IF NEW.saldo < v_limite AND (v_ultimo IS NULL OR v_ultimo < NOW() - INTERVAL '1 day') THEN
+//         payload := jsonb_build_object(
+//           'type', 'UPDATE',
+//           'table', 'contas',
+//           'record', row_to_json(NEW),
+//           'old_record', row_to_json(OLD),
+//           'limite', v_limite
+//         );
+//
+//         PERFORM net.http_post(
+//             url := edge_function_url,
+//             headers := '{"Content-Type": "application/json"}'::jsonb,
+//             body := payload
+//         );
+//       END IF;
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 // FUNCTION trigger_notify_deposito()
 //   CREATE OR REPLACE FUNCTION public.trigger_notify_deposito()
 //    RETURNS trigger
@@ -1387,6 +1440,8 @@ export const Constants = {
 //
 
 // --- TRIGGERS ---
+// Table: contas
+//   on_conta_saldo_updated_notify: CREATE TRIGGER on_conta_saldo_updated_notify AFTER UPDATE ON public.contas FOR EACH ROW EXECUTE FUNCTION trigger_notify_alerta_saldo()
 // Table: depositos
 //   on_deposito_inserted: CREATE TRIGGER on_deposito_inserted AFTER INSERT ON public.depositos FOR EACH ROW EXECUTE FUNCTION notify_depositos()
 //   on_deposito_status_change_notify_email: CREATE TRIGGER on_deposito_status_change_notify_email AFTER INSERT OR UPDATE ON public.depositos FOR EACH ROW EXECUTE FUNCTION trigger_notify_deposito()

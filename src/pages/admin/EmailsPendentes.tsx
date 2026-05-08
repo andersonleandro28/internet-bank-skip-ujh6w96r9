@@ -52,18 +52,24 @@ export default function EmailsPendentes() {
   const handleReenviar = async (email: EmailPendente) => {
     setReenviando(email.id)
     try {
-      // Como não há um endpoint genérico de reenvio configurado nativamente para todos os tipos,
-      // apenas atualizamos o status para permitir que outro trigger ou worker processe novamente no futuro.
       const { error } = await supabase
         .from('emails_pendentes')
-        .update({ status: 'pendente', tentativas: 0 })
+        .update({
+          status: 'pendente',
+          tentativas: 0,
+          proxima_tentativa: new Date().toISOString(),
+        })
         .eq('id', email.id)
 
       if (error) throw error
-      toast.success('E-mail marcado para reenvio automático.')
+
+      // Call the retry edge function immediately to force processing
+      await supabase.functions.invoke('retry_emails_pendentes', { method: 'POST' })
+
+      toast.success('Reenvio processado com sucesso.')
       fetchEmails()
     } catch (error) {
-      toast.error('Erro ao marcar e-mail para reenvio')
+      toast.error('Erro ao reenviar e-mail')
     } finally {
       setReenviando(null)
     }
@@ -73,7 +79,7 @@ export default function EmailsPendentes() {
     setTestando(true)
     toast.info('Processando relatórios mensais...')
     try {
-      const { data, error } = await supabase.functions.invoke('relatorio-mensal', {
+      const { data, error } = await supabase.functions.invoke('enviar_relatorio_mensal', {
         method: 'POST',
       })
       if (error) throw error
