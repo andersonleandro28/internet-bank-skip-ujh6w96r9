@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound'
 import ConfiguracoesTaxas from './pages/admin/ConfiguracoesTaxas'
 import GerenciarCestas from './pages/admin/GerenciarCestas'
 import Painel from './pages/admin/Painel'
+import Depositar from './pages/admin/Depositar'
 
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/admin/painel" element={<Painel />} />
               <Route path="/admin/configuracoes-taxas" element={<ConfiguracoesTaxas />} />
               <Route path="/admin/gerenciar-cestas" element={<GerenciarCestas />} />
+              <Route path="/admin/depositar" element={<Depositar />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
