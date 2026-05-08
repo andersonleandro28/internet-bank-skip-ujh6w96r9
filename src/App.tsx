@@ -10,6 +10,7 @@ import Extrato from './pages/Extrato'
 import Transfer from './pages/Transfer'
 import Boleto from './pages/Boleto'
 import Carregar from './pages/Carregar'
+import Perfil from './pages/Perfil'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import NotFound from './pages/NotFound'
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/transferir" element={<Transfer />} />
               <Route path="/pagar-boleto" element={<Boleto />} />
               <Route path="/carregar" element={<Carregar />} />
+              <Route path="/perfil" element={<Perfil />} />
 
               {/* Admin Routes */}
               <Route element={<AdminRoute />}>

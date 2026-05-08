@@ -50,7 +50,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (data?.user) {
+      try {
+        await supabase.from('historico_logins' as any).insert({
+          user_id: data.user.id,
+          ip: 'IP não capturado', // Em uma implementação real, usaria uma edge function ou API para capturar o IP real
+          dispositivo: navigator.userAgent,
+        })
+      } catch (e) {
+        console.error('Falha ao registrar login', e)
+      }
+    }
+
     return { error }
   }
 
