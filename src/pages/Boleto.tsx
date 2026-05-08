@@ -65,8 +65,9 @@ export default function BoletoPage() {
 
   const buscarBoleto = async (codeStr: string) => {
     setError('')
-    if (codeStr.replace(/\D/g, '').length < 47) {
-      setError('O código deve conter 47 dígitos.')
+    const numbers = codeStr.replace(/\D/g, '')
+    if (numbers.length < 40 || numbers.length > 48) {
+      setError('O código deve conter entre 40 e 48 dígitos.')
       return
     }
 
@@ -227,14 +228,14 @@ export default function BoletoPage() {
               <TabsContent value="digitar" className="p-4 mt-0 space-y-4 outline-none">
                 <div className="space-y-2">
                   <Input
-                    placeholder="Código de barras (47 dígitos)"
+                    placeholder="Código de barras (40 a 48 dígitos)"
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
-                    maxLength={47}
+                    maxLength={48}
                     className="h-12 p-3 rounded-xl border-slate-300 focus-visible:ring-primary bg-white text-base shadow-sm"
                   />
                   <div className="flex justify-end">
-                    <p className="text-xs text-slate-500">{codigo.length}/47</p>
+                    <p className="text-xs text-slate-500">{codigo.length}/48</p>
                   </div>
                 </div>
 
@@ -247,7 +248,7 @@ export default function BoletoPage() {
 
                 <Button
                   onClick={() => buscarBoleto(codigo)}
-                  disabled={codigo.length < 47 || loading}
+                  disabled={codigo.length < 40 || loading}
                   className="w-full mt-5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-12 font-medium disabled:bg-slate-200 disabled:text-slate-400 transition-all"
                 >
                   {loading ? 'Buscando...' : 'Buscar boleto'}

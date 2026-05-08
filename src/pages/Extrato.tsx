@@ -116,7 +116,10 @@ export default function Extrato() {
     return data.filter((tx) => {
       if (tipoFiltro !== 'Todos') {
         if (tipoFiltro === 'Depósito' && tx.source !== 'deposito') return false
-        if (tipoFiltro !== 'Depósito' && tx.tipo.toLowerCase() !== tipoFiltro.toLowerCase())
+        if (
+          tipoFiltro !== 'Depósito' &&
+          tx.tipo.toLowerCase().replace('_', ' ') !== tipoFiltro.toLowerCase().replace('_', ' ')
+        )
           return false
       }
       return true

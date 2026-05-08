@@ -62,7 +62,7 @@ export default function Transfer() {
         .select('id')
         .eq('user_id', user.id)
         .eq('ativo', true)
-        .single()
+        .maybeSingle()
       if (cesta) {
         const { data: itens } = await supabase
           .from('cestas_itens')
@@ -246,7 +246,7 @@ export default function Transfer() {
             value={amountStr}
             onChange={handleAmount}
             placeholder="0,00"
-            className="pl-10 border-gray-200 focus-visible:ring-primary p-3 h-12 font-medium text-lg"
+            className="border-gray-200 focus-visible:ring-primary py-3 pr-3 pl-10 h-12 font-medium text-lg"
           />
         </div>
 
