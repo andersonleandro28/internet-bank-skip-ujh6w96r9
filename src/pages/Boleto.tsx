@@ -38,6 +38,7 @@ export default function BoletoPage() {
         .maybeSingle()
 
       if (servico && user) {
+        let hasCustomFee = false
         const { data: cesta } = await supabase
           .from('cestas_clientes')
           .select('id')
@@ -54,8 +55,25 @@ export default function BoletoPage() {
             .eq('ativo', true)
             .maybeSingle()
 
-          if (item)
+          if (item) {
             setTaxas({ percentual: Number(item.taxa_percentual), fixa: Number(item.taxa_fixa) })
+            hasCustomFee = true
+          }
+        }
+
+        if (!hasCustomFee) {
+          const { data: globalFee } = await supabase
+            .from('taxas_servicos')
+            .select('percentual, valor_fixo')
+            .eq('servico_id', servico.id)
+            .maybeSingle()
+
+          if (globalFee) {
+            setTaxas({
+              percentual: Number(globalFee.percentual),
+              fixa: Number(globalFee.valor_fixo),
+            })
+          }
         }
       }
     } catch (e) {

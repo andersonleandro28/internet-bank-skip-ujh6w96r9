@@ -57,26 +57,50 @@ export default function Transfer() {
       setFavorites(favs || [])
       setLoadingFavs(false)
 
+      const newRates = { PIX: { p: 0, f: 0 }, TED: { p: 0, f: 0 } }
+
+      // 1. Obter taxas globais como fallback
+      const { data: servicos } = await supabase.from('servicos').select('id, nome')
+      const { data: taxasGlobais } = await supabase
+        .from('taxas_servicos')
+        .select('servico_id, percentual, valor_fixo')
+
+      const pixServico = servicos?.find((s) => s.nome.toUpperCase() === 'PIX')
+      const tedServico = servicos?.find((s) => s.nome.toUpperCase() === 'TED')
+
+      if (pixServico) {
+        const tGlobal = taxasGlobais?.find((t) => t.servico_id === pixServico.id)
+        if (tGlobal) newRates.PIX = { p: Number(tGlobal.percentual), f: Number(tGlobal.valor_fixo) }
+      }
+      if (tedServico) {
+        const tGlobal = taxasGlobais?.find((t) => t.servico_id === tedServico.id)
+        if (tGlobal) newRates.TED = { p: Number(tGlobal.percentual), f: Number(tGlobal.valor_fixo) }
+      }
+
+      // 2. Sobrescrever com taxas da cesta do cliente (se houver)
       const { data: cesta } = await supabase
         .from('cestas_clientes')
         .select('id')
         .eq('user_id', user.id)
         .eq('ativo', true)
         .maybeSingle()
+
       if (cesta) {
         const { data: itens } = await supabase
           .from('cestas_itens')
           .select('taxa_percentual, taxa_fixa, servicos(nome)')
           .eq('cesta_id', cesta.id)
           .eq('ativo', true)
-        const newRates = { PIX: { p: 0, f: 0 }, TED: { p: 0, f: 0 } }
+
         itens?.forEach((i: any) => {
           const n = i.servicos?.nome?.toUpperCase()
-          if (n === 'PIX' || n === 'TED')
-            newRates[n] = { p: Number(i.taxa_percentual), f: Number(i.taxa_fixa) }
+          if (n === 'PIX' || n === 'TED') {
+            newRates[n as 'PIX' | 'TED'] = { p: Number(i.taxa_percentual), f: Number(i.taxa_fixa) }
+          }
         })
-        setRates(newRates)
       }
+
+      setRates(newRates)
     }
     fetchData()
   }, [user])

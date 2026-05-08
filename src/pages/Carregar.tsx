@@ -101,6 +101,7 @@ export default function Carregar() {
           .maybeSingle()
 
         if (servico) {
+          let hasCustom = false
           const { data: cesta } = await supabase
             .from('cestas_clientes')
             .select('id')
@@ -119,6 +120,20 @@ export default function Carregar() {
             if (item) {
               setTaxaFixa(item.taxa_fixa || 0)
               setTaxaPercentual(item.taxa_percentual || 0)
+              hasCustom = true
+            }
+          }
+
+          if (!hasCustom) {
+            const { data: global } = await supabase
+              .from('taxas_servicos')
+              .select('percentual, valor_fixo')
+              .eq('servico_id', servico.id)
+              .maybeSingle()
+
+            if (global) {
+              setTaxaFixa(global.valor_fixo || 0)
+              setTaxaPercentual(global.percentual || 0)
             }
           }
         }
