@@ -33,6 +33,7 @@ import { MobileNav } from '@/components/mobile-nav'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
 import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
+import { NotificationsSheet } from '@/components/notifications-sheet'
 
 const baseMenuItems = [
   { icon: Home, label: 'Início', path: '/' },
@@ -149,7 +150,9 @@ export default function Layout() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-4 md:gap-6">
+            <div className="flex items-center gap-2 md:gap-6">
+              <NotificationsSheet />
+
               <button
                 onClick={handleLogout}
                 className="md:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
@@ -158,10 +161,6 @@ export default function Layout() {
               </button>
 
               <div className="hidden md:flex items-center gap-4">
-                <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-white"></span>
-                </button>
                 <div className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-100">
                   <div className="hidden md:flex flex-col items-end">
                     <span className="text-sm font-medium leading-none">{userFirstName}</span>
