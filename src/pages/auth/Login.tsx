@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
+import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 
 export default function Login() {
   const navigate = useNavigate()

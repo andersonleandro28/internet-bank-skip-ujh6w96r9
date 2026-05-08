@@ -18,7 +18,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
+import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 
 type TipoConta = 'PF' | 'PJ' | null
 

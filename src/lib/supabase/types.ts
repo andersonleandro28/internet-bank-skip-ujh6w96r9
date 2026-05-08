@@ -459,6 +459,7 @@ export type Database = {
         Row: {
           cpf: string
           data_nascimento: string | null
+          documento_identidade_url: string | null
           id: string
           nome: string
           selfie_url: string | null
@@ -467,6 +468,7 @@ export type Database = {
         Insert: {
           cpf: string
           data_nascimento?: string | null
+          documento_identidade_url?: string | null
           id?: string
           nome: string
           selfie_url?: string | null
@@ -475,6 +477,7 @@ export type Database = {
         Update: {
           cpf?: string
           data_nascimento?: string | null
+          documento_identidade_url?: string | null
           id?: string
           nome?: string
           selfie_url?: string | null
@@ -496,6 +499,11 @@ export type Database = {
           documentos_url: string | null
           id: string
           razao_social: string
+          resp_cpf: string | null
+          resp_data_nascimento: string | null
+          resp_documento_url: string | null
+          resp_nome: string | null
+          resp_selfie_url: string | null
           user_id: string
         }
         Insert: {
@@ -503,6 +511,11 @@ export type Database = {
           documentos_url?: string | null
           id?: string
           razao_social: string
+          resp_cpf?: string | null
+          resp_data_nascimento?: string | null
+          resp_documento_url?: string | null
+          resp_nome?: string | null
+          resp_selfie_url?: string | null
           user_id: string
         }
         Update: {
@@ -510,6 +523,11 @@ export type Database = {
           documentos_url?: string | null
           id?: string
           razao_social?: string
+          resp_cpf?: string | null
+          resp_data_nascimento?: string | null
+          resp_documento_url?: string | null
+          resp_nome?: string | null
+          resp_selfie_url?: string | null
           user_id?: string
         }
         Relationships: [
@@ -793,12 +811,18 @@ export const Constants = {
 //   nome: text (not null)
 //   data_nascimento: date (nullable)
 //   selfie_url: text (nullable)
+//   documento_identidade_url: text (nullable)
 // Table: usuarios_pj
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
 //   cnpj: text (not null)
 //   razao_social: text (not null)
 //   documentos_url: text (nullable)
+//   resp_nome: text (nullable)
+//   resp_cpf: text (nullable)
+//   resp_data_nascimento: date (nullable)
+//   resp_selfie_url: text (nullable)
+//   resp_documento_url: text (nullable)
 
 // --- CONSTRAINTS ---
 // Table: auditoria

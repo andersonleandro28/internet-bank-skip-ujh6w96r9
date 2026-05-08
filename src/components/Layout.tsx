@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input'
 import { MobileNav } from '@/components/mobile-nav'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
-import logoAclop from '@/assets/logo-aclop-ok8-a16ad.png'
+import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 import { NotificationsSheet } from '@/components/notifications-sheet'
 
 const baseMenuItems = [
