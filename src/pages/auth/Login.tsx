@@ -18,8 +18,8 @@ export default function Login() {
   const navigate = useNavigate()
   const { signIn } = useAuth()
 
-  const [email, setEmail] = useState('ana@mock.com')
-  const [password, setPassword] = useState('Skip@Pass')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -31,7 +31,13 @@ export default function Login() {
     const { error } = await signIn(email, password)
 
     if (error) {
-      setErrorMsg('Credenciais inválidas.')
+      if (error.message === 'Email not confirmed') {
+        setErrorMsg('Por favor, confirme seu e-mail antes de entrar.')
+      } else if (error.message === 'Invalid login credentials') {
+        setErrorMsg('E-mail ou senha incorretos.')
+      } else {
+        setErrorMsg('Credenciais inválidas.')
+      }
       setLoading(false)
     } else {
       navigate('/')

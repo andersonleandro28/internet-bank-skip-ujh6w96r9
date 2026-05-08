@@ -158,6 +158,10 @@ export default function Register() {
       if (error) throw error
       if (!data?.user) throw new Error('Erro ao criar usuário')
 
+      if (data.user.identities && data.user.identities.length === 0) {
+        throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
+      }
+
       const userId = data.user.id
 
       // Sincronização defensiva: garante que as tabelas base existem.
