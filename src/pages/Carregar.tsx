@@ -61,7 +61,6 @@ export default function Carregar() {
   const [rede, setRede] = useState('')
 
   const [cotacaoBrl, setCotacaoBrl] = useState<number | null>(null)
-  const [spread] = useState(2) // 2% fixed spread as default
   const [taxaFixa, setTaxaFixa] = useState(0)
   const [taxaPercentual, setTaxaPercentual] = useState(0)
   const [loadingRate, setLoadingRate] = useState(true)
@@ -97,7 +96,7 @@ export default function Carregar() {
         const { data: servico } = await supabase
           .from('servicos')
           .select('id')
-          .eq('nome', 'carga_usdt')
+          .ilike('nome', '%carga%usdt%')
           .maybeSingle()
 
         if (servico) {
@@ -161,11 +160,11 @@ export default function Carregar() {
   }, [session?.user?.id])
 
   const numValor = parseFloat(valorBrl.replace(',', '.')) || 0
-  const taxaBrl = (numValor * taxaPercentual) / 100 + taxaFixa
+  const valorTaxaPercentual = (numValor * taxaPercentual) / 100
+  const taxaBrl = valorTaxaPercentual + taxaFixa
   const valorTotalBrl = numValor + taxaBrl
 
-  const valorConvertido = numValor * (1 - spread / 100)
-  const valorUsdt = cotacaoBrl ? valorConvertido / cotacaoBrl : 0
+  const valorUsdt = cotacaoBrl ? numValor / cotacaoBrl : 0
 
   const handleCarregar = async () => {
     if (!session?.user?.id) return toast.error('Usuário não autenticado')
@@ -278,10 +277,16 @@ export default function Carregar() {
                 = {(1 / cotacaoBrl).toFixed(4)} USDT
               </span>
             </div>
-            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
-              <span className="text-sm text-white/90">Spread Administrativo</span>
+            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3 mb-2">
+              <span className="text-sm text-white/90">Taxa Percentual (Spread)</span>
               <span className="bg-white text-primary text-xs px-2.5 py-1 rounded-md font-bold">
-                {spread}%
+                {taxaPercentual}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center bg-white/10 rounded-lg p-3">
+              <span className="text-sm text-white/90">Taxa Fixa</span>
+              <span className="bg-white text-primary text-xs px-2.5 py-1 rounded-md font-bold">
+                R$ {taxaFixa.toFixed(2)}
               </span>
             </div>
             {numValor > 0 && (
@@ -402,16 +407,14 @@ export default function Carregar() {
               <span className="text-slate-700 font-medium">R$ {numValor.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Spread ({spread}%)</span>
+              <span className="text-slate-500">Taxa Percentual ({taxaPercentual}%)</span>
               <span className="text-slate-700 font-medium">
-                - R$ {(numValor * (spread / 100)).toFixed(2)}
+                R$ {valorTaxaPercentual.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between text-sm items-center">
-              <span className="text-slate-500">Taxa de Serviço</span>
-              <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-md font-medium">
-                R$ {taxaBrl.toFixed(2)}
-              </span>
+              <span className="text-slate-500">Taxa Fixa</span>
+              <span className="text-slate-700 font-medium">R$ {taxaFixa.toFixed(2)}</span>
             </div>
             <div className="pt-3 border-t border-slate-200 flex justify-between text-base">
               <span className="font-medium text-slate-700">Custo Total (BRL)</span>
