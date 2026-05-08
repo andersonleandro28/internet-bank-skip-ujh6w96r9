@@ -195,6 +195,50 @@ export type Database = {
           },
         ]
       }
+      emails_pendentes: {
+        Row: {
+          assunto: string
+          created_at: string | null
+          email: string
+          erro: string | null
+          id: string
+          status: string | null
+          template: string
+          tentativas: number | null
+          user_id: string | null
+        }
+        Insert: {
+          assunto: string
+          created_at?: string | null
+          email: string
+          erro?: string | null
+          id?: string
+          status?: string | null
+          template: string
+          tentativas?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          assunto?: string
+          created_at?: string | null
+          email?: string
+          erro?: string | null
+          id?: string
+          status?: string | null
+          template?: string
+          tentativas?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'emails_pendentes_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       favorecidos: {
         Row: {
           agencia: string | null
@@ -747,6 +791,16 @@ export const Constants = {
 //   status: text (not null, default: 'pendente'::text)
 //   created_at: timestamp with time zone (not null, default: now())
 //   confirmed_at: timestamp with time zone (nullable)
+// Table: emails_pendentes
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (nullable)
+//   email: text (not null)
+//   assunto: text (not null)
+//   template: text (not null)
+//   tentativas: integer (nullable, default: 0)
+//   erro: text (nullable)
+//   status: text (nullable, default: 'pendente'::text)
+//   created_at: timestamp with time zone (nullable, default: now())
 // Table: favorecidos
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -843,6 +897,9 @@ export const Constants = {
 //   FOREIGN KEY depositos_admin_id_fkey: FOREIGN KEY (admin_id) REFERENCES usuarios(id)
 //   PRIMARY KEY depositos_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY depositos_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+// Table: emails_pendentes
+//   PRIMARY KEY emails_pendentes_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY emails_pendentes_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 // Table: favorecidos
 //   PRIMARY KEY favorecidos_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY favorecidos_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
@@ -907,6 +964,9 @@ export const Constants = {
 //     WITH CHECK: (user_id = auth.uid())
 //   Policy "depositos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
+// Table: emails_pendentes
+//   Policy "admin_all_emails_pendentes" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM usuarios   WHERE ((usuarios.id = auth.uid()) AND (usuarios.role = 'admin'::role_usuario))))
 // Table: favorecidos
 //   Policy "favorecidos_insert" (INSERT, PERMISSIVE) roles={authenticated}
 //     WITH CHECK: (user_id = auth.uid())
