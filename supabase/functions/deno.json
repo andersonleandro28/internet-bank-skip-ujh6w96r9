@@ -1,6 +1,7 @@
 {
   "_versions": {
     "send-welcome-email": 1,
-    "notify-requisicao": 1
+    "notify-requisicao": 1,
+    "notify-deposito": 1
   }
 }

@@ -1327,12 +1327,42 @@ export const Constants = {
 //   END;
 //   $function$
 //
+// FUNCTION trigger_notify_requisicao()
+//   CREATE OR REPLACE FUNCTION public.trigger_notify_requisicao()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/notify-requisicao';
+//     payload jsonb;
+//   BEGIN
+//     -- Apenas disparar se o status mudou para aprovado ou reprovado
+//     IF OLD.status != NEW.status AND NEW.status IN ('aprovado', 'reprovado') THEN
+//       payload := jsonb_build_object(
+//         'type', 'UPDATE',
+//         'table', 'requisicoes',
+//         'record', row_to_json(NEW),
+//         'old_record', row_to_json(OLD)
+//       );
+//
+//       PERFORM net.http_post(
+//           url := edge_function_url,
+//           headers := '{"Content-Type": "application/json"}'::jsonb,
+//           body := payload
+//       );
+//     END IF;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 
 // --- TRIGGERS ---
 // Table: depositos
 //   on_deposito_inserted: CREATE TRIGGER on_deposito_inserted AFTER INSERT ON public.depositos FOR EACH ROW EXECUTE FUNCTION notify_depositos()
 // Table: requisicoes
 //   on_requisicao_inserted: CREATE TRIGGER on_requisicao_inserted AFTER INSERT ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION notify_admin_new_requisicao()
+//   on_requisicao_status_change_notify_email: CREATE TRIGGER on_requisicao_status_change_notify_email AFTER UPDATE ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION trigger_notify_requisicao()
 //   on_requisicao_updated: CREATE TRIGGER on_requisicao_updated AFTER UPDATE ON public.requisicoes FOR EACH ROW EXECUTE FUNCTION notify_requisicoes_update()
 // Table: usuarios
 //   on_usuario_updated: CREATE TRIGGER on_usuario_updated AFTER UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION notify_usuarios_update()
