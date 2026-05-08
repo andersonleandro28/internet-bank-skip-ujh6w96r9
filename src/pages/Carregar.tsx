@@ -8,6 +8,13 @@ import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const networks = [
   {
@@ -59,6 +66,10 @@ export default function Carregar() {
   const [taxaPercentual, setTaxaPercentual] = useState(0)
   const [loadingRate, setLoadingRate] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  const [salvarCarteira, setSalvarCarteira] = useState(false)
+  const [nomeCarteira, setNomeCarteira] = useState('')
+  const [carteirasSalvas, setCarteirasSalvas] = useState<any[]>([])
 
   useEffect(() => {
     const getRate = async () => {
@@ -116,8 +127,19 @@ export default function Carregar() {
       }
     }
 
+    const fetchCarteiras = async () => {
+      if (!session?.user?.id) return
+      const { data } = await supabase
+        .from('favorecidos')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('tipo', 'carteira_usdt')
+      if (data) setCarteirasSalvas(data)
+    }
+
     getRate()
     fetchFees()
+    fetchCarteiras()
 
     const interval = setInterval(getRate, 10000)
     return () => clearInterval(interval)
@@ -143,6 +165,22 @@ export default function Carregar() {
 
     setSubmitting(true)
     try {
+      if (salvarCarteira && nomeCarteira) {
+        const jaSalvo = carteirasSalvas.some((c) => c.conta === hashCripto && c.banco === rede)
+        if (!jaSalvo) {
+          const { error: errFav } = await supabase.from('favorecidos').insert({
+            user_id: session.user.id,
+            tipo: 'carteira_usdt',
+            conta: hashCripto,
+            banco: rede,
+            nome: nomeCarteira,
+            salvo: true,
+          })
+          if (errFav) console.error('Erro ao salvar carteira', errFav)
+          else toast.success('Carteira salva com sucesso!')
+        }
+      }
+
       const novoSaldo = conta.saldo - valorTotalBrl
       const { error: errConta } = await supabase
         .from('contas')
@@ -162,6 +200,8 @@ export default function Carregar() {
         metadados: {
           hash_cripto: hashCripto,
           rede: rede,
+          valor_usdt: valorUsdt,
+          cotacao_brl: cotacaoBrl,
         },
       })
       if (errReq) throw errReq
@@ -238,6 +278,36 @@ export default function Carregar() {
           </div>
         )}
 
+        {/* Carteiras Salvas */}
+        {carteirasSalvas.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Carteiras Salvas
+            </label>
+            <Select
+              onValueChange={(val) => {
+                const c = carteirasSalvas.find((x) => x.id === val)
+                if (c) {
+                  setHashCripto(c.conta || '')
+                  setRede(c.banco || '')
+                }
+              }}
+            >
+              <SelectTrigger className="w-full bg-white h-14 rounded-xl border-slate-300">
+                <SelectValue placeholder="Selecione uma carteira salva" />
+              </SelectTrigger>
+              <SelectContent>
+                {carteirasSalvas.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome} ({c.banco}) - {c.conta?.substring(0, 6)}...
+                    {c.conta?.substring(c.conta.length - 4)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Hash da Carteira */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -283,6 +353,29 @@ export default function Carregar() {
               )
             })}
           </div>
+
+          <div className="flex flex-col gap-3 mt-5">
+            <label className="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary"
+                checked={salvarCarteira}
+                onChange={(e) => setSalvarCarteira(e.target.checked)}
+              />
+              <span className="text-sm font-medium text-slate-700">
+                Salvar esta carteira para usar depois
+              </span>
+            </label>
+
+            {salvarCarteira && (
+              <Input
+                placeholder="Apelido da carteira (ex: Minha Carteira Principal)"
+                value={nomeCarteira}
+                onChange={(e) => setNomeCarteira(e.target.value)}
+                className="bg-white h-12 rounded-xl border-slate-300 focus-visible:ring-primary"
+              />
+            )}
+          </div>
         </div>
 
         {/* Card de Resumo */}
@@ -314,7 +407,14 @@ export default function Carregar() {
 
         <Button
           onClick={handleCarregar}
-          disabled={submitting || !cotacaoBrl || numValor <= 0 || !hashCripto || !rede}
+          disabled={
+            submitting ||
+            !cotacaoBrl ||
+            numValor <= 0 ||
+            !hashCripto ||
+            !rede ||
+            (salvarCarteira && !nomeCarteira)
+          }
           className="w-full mt-2 py-6 text-base bg-primary hover:bg-primary/90 disabled:bg-slate-300 disabled:text-slate-500 text-primary-foreground transition-colors rounded-xl font-semibold shadow-sm"
         >
           {submitting ? 'Processando...' : 'Carregar USDT'}

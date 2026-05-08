@@ -239,6 +239,38 @@ export type Database = {
           },
         ]
       }
+      historico_logins: {
+        Row: {
+          created_at: string
+          dispositivo: string | null
+          id: string
+          ip: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'historico_logins_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       requisicoes: {
         Row: {
           created_at: string
@@ -669,6 +701,12 @@ export const Constants = {
 //   banco: text (nullable)
 //   nome: text (not null)
 //   salvo: boolean (not null, default: true)
+// Table: historico_logins
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   ip: text (nullable)
+//   dispositivo: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: requisicoes
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -738,6 +776,9 @@ export const Constants = {
 // Table: favorecidos
 //   PRIMARY KEY favorecidos_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY favorecidos_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+// Table: historico_logins
+//   PRIMARY KEY historico_logins_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY historico_logins_user_id_fkey: FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 // Table: requisicoes
 //   PRIMARY KEY requisicoes_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY requisicoes_processed_by_fkey: FOREIGN KEY (processed_by) REFERENCES usuarios(id)
@@ -796,6 +837,11 @@ export const Constants = {
 //   Policy "favorecidos_insert" (INSERT, PERMISSIVE) roles={authenticated}
 //     WITH CHECK: (user_id = auth.uid())
 //   Policy "favorecidos_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+// Table: historico_logins
+//   Policy "historico_logins_insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (user_id = auth.uid())
+//   Policy "historico_logins_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 // Table: requisicoes
 //   Policy "requisicoes_admin_select" (SELECT, PERMISSIVE) roles={authenticated}

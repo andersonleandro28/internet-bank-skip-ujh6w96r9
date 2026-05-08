@@ -151,6 +151,18 @@ const MetadataDisplay = ({ req }: { req: RequisicaoPendente }) => {
           <span className="text-xs text-slate-500 font-medium uppercase">Rede</span>
           <div className="text-sm font-medium text-slate-800 mt-1 capitalize">{rede || '-'}</div>
         </div>
+        <div>
+          <span className="text-xs text-slate-500 font-medium uppercase">Cotação Aplicada</span>
+          <div className="text-sm font-medium text-slate-800 mt-1">
+            {meta.cotacao_brl ? `R$ ${Number(meta.cotacao_brl).toFixed(4)}` : '-'}
+          </div>
+        </div>
+        <div>
+          <span className="text-xs text-slate-500 font-medium uppercase">A Creditar (USDT)</span>
+          <div className="text-sm font-bold text-green-600 mt-1">
+            {meta.valor_usdt ? `${Number(meta.valor_usdt).toFixed(2)} USDT` : '-'}
+          </div>
+        </div>
       </div>
     )
   }
