@@ -40,45 +40,50 @@ export function NovaCestaModal({ open, onOpenChange, servicos, onCriar, isSaving
         onOpenChange(val)
       }}
     >
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Criar Nova Cesta</DialogTitle>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="mb-4 space-y-3">
+          <DialogTitle className="text-foreground text-xl">Criar Nova Cesta</DialogTitle>
           <DialogDescription>
             Configure um novo pacote de serviços customizado para este cliente.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Nome da Cesta</Label>
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <Label className="text-foreground">Nome da Cesta</Label>
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Cesta Premium"
-              className="focus-visible:ring-[#8B5CF6]"
+              className="focus-visible:ring-primary border-input p-3 h-auto"
             />
           </div>
-          <div className="space-y-3">
-            <Label>Serviços Inclusos</Label>
-            <div className="grid gap-3">
+          <div className="space-y-4">
+            <Label className="text-foreground">Serviços Inclusos</Label>
+            <div className="grid gap-4">
               {servicos.map((s: any) => (
-                <div key={s.id} className="p-3 border rounded-md space-y-3 bg-gray-50/50">
-                  <div className="flex items-center space-x-2">
+                <div
+                  key={s.id}
+                  className="p-4 border border-border rounded-lg space-y-3 bg-secondary/20"
+                >
+                  <div className="flex items-center space-x-3">
                     <Checkbox
                       id={`ns-${s.id}`}
                       checked={itens[s.id]?.selected || false}
                       onCheckedChange={(c) =>
                         setItens((prev) => ({ ...prev, [s.id]: { ...prev[s.id], selected: !!c } }))
                       }
-                      className="data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6]"
                     />
-                    <Label htmlFor={`ns-${s.id}`} className="cursor-pointer font-medium">
+                    <Label
+                      htmlFor={`ns-${s.id}`}
+                      className="cursor-pointer font-medium text-foreground"
+                    >
                       {s.nome}
                     </Label>
                   </div>
                   {itens[s.id]?.selected && (
-                    <div className="grid grid-cols-2 gap-2 pl-6 animate-fade-in-down duration-200">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Taxa (%)</Label>
+                    <div className="grid grid-cols-2 gap-3 pl-7 animate-fade-in-down duration-200">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Taxa (%)</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -91,11 +96,11 @@ export function NovaCestaModal({ open, onOpenChange, servicos, onCriar, isSaving
                               [s.id]: { ...prev[s.id], taxa_percentual: e.target.value },
                             }))
                           }
-                          className="h-8 focus-visible:ring-[#8B5CF6]"
+                          className="p-3 h-auto focus-visible:ring-primary border-input"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Fixo (R$)</Label>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Fixo (R$)</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -107,7 +112,7 @@ export function NovaCestaModal({ open, onOpenChange, servicos, onCriar, isSaving
                               [s.id]: { ...prev[s.id], taxa_fixa: e.target.value },
                             }))
                           }
-                          className="h-8 focus-visible:ring-[#8B5CF6]"
+                          className="p-3 h-auto focus-visible:ring-primary border-input"
                         />
                       </div>
                     </div>
@@ -117,14 +122,14 @@ export function NovaCestaModal({ open, onOpenChange, servicos, onCriar, isSaving
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="mt-6 space-x-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="p-3 h-auto">
             Cancelar
           </Button>
           <Button
             onClick={handleCriar}
             disabled={isSaving || !nome.trim()}
-            className="bg-[#8B5CF6] hover:bg-[#7c3aed] text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground transition-colors p-3 h-auto"
           >
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Criar Cesta

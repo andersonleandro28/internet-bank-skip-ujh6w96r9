@@ -122,13 +122,13 @@ export default function GerenciarCestas() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6 animate-fade-in font-sans">
-      <header className="bg-[#8B5CF6] rounded-xl p-4 text-white shadow-md flex items-center justify-between">
+    <div className="max-w-4xl mx-auto bg-background font-sans p-0 pb-12">
+      <header className="bg-primary p-4 text-primary-foreground shadow-sm flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:bg-white/20"
+            className="text-primary-foreground hover:bg-white/20"
             onClick={() => navigate('/')}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -137,84 +137,86 @@ export default function GerenciarCestas() {
         </div>
       </header>
 
-      {error ? (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erro</AlertTitle>
-          <AlertDescription className="flex items-center justify-between">
-            <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchData}>
-              Tentar novamente
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-            <div className="flex items-center space-x-2 text-gray-700 font-medium">
-              <Users className="h-5 w-5 text-[#8B5CF6]" />
-              <h2>Selecione o Cliente</h2>
-            </div>
-            <Select value={selectedCliente} onValueChange={setSelectedCliente}>
-              <SelectTrigger className="w-full h-12 focus:ring-[#8B5CF6]">
-                <SelectValue placeholder="Busque por nome ou email..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clientes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome} ({c.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="p-4 space-y-4">
+        {error ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={fetchData}>
+                Tentar novamente
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : loading ? (
+          <div className="space-y-4 mt-4">
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-64 w-full rounded-lg" />
           </div>
-
-          {!selectedCliente ? (
-            <div className="text-center py-12 text-gray-500 border-2 border-dashed rounded-xl bg-gray-50/50">
-              <PackagePlus className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-              <p>Selecione um cliente acima para gerenciar suas cestas.</p>
-            </div>
-          ) : (
-            <div className="space-y-4 animate-fade-in-up duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-800">Cestas do Cliente</h3>
-                <Button
-                  onClick={() => setModalOpen(true)}
-                  className="bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors"
-                >
-                  <PackagePlus className="mr-2 h-4 w-4" />
-                  Criar Nova Cesta
-                </Button>
+        ) : (
+          <div className="space-y-4 mt-4">
+            <div className="bg-card p-4 rounded-lg border border-border shadow-subtle mb-4 space-y-4">
+              <div className="flex items-center space-x-2 text-foreground font-medium">
+                <Users className="h-5 w-5 text-primary" />
+                <h2>Selecione o Cliente</h2>
               </div>
-
-              {loadingCestas ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-64 w-full rounded-xl" />
-                </div>
-              ) : cestas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
-                  <p>Este cliente não possui nenhuma cesta customizada.</p>
-                </div>
-              ) : (
-                cestas.map((cesta) => (
-                  <CestaCard
-                    key={cesta.id}
-                    cesta={cesta}
-                    servicos={servicos}
-                    onSave={handleSalvarCesta}
-                    isSaving={isSaving}
-                  />
-                ))
-              )}
+              <Select value={selectedCliente} onValueChange={setSelectedCliente}>
+                <SelectTrigger className="w-full p-3 h-auto focus:ring-primary border-input">
+                  <SelectValue placeholder="Busque por nome ou email..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome} ({c.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
-      )}
+
+            {!selectedCliente ? (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-secondary/30 mt-4">
+                <PackagePlus className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                <p>Selecione um cliente acima para gerenciar suas cestas.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-fade-in-up duration-300 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-foreground">Cestas do Cliente</h3>
+                  <Button
+                    onClick={() => setModalOpen(true)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:bg-muted disabled:text-muted-foreground p-3 h-auto"
+                  >
+                    <PackagePlus className="mr-2 h-4 w-4" />
+                    Criar Nova Cesta
+                  </Button>
+                </div>
+
+                {loadingCestas ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-64 w-full rounded-lg" />
+                  </div>
+                ) : cestas.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground bg-secondary/30 rounded-lg border border-dashed">
+                    <p>Este cliente não possui nenhuma cesta customizada.</p>
+                  </div>
+                ) : (
+                  cestas.map((cesta) => (
+                    <CestaCard
+                      key={cesta.id}
+                      cesta={cesta}
+                      servicos={servicos}
+                      onSave={handleSalvarCesta}
+                      isSaving={isSaving}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <NovaCestaModal
         open={modalOpen}

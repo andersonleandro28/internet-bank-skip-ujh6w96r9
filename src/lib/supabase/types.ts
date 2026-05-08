@@ -743,9 +743,15 @@ export const Constants = {
 //   Policy "auditoria_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM usuarios   WHERE ((usuarios.id = auth.uid()) AND (usuarios.role = 'admin'::role_usuario))))
 // Table: cestas_clientes
+//   Policy "cestas_clientes_admin_all" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 //   Policy "cestas_clientes_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 // Table: cestas_itens
+//   Policy "cestas_itens_admin_all" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 //   Policy "cestas_itens_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (cesta_id IN ( SELECT cestas_clientes.id    FROM cestas_clientes   WHERE (cestas_clientes.user_id = auth.uid())))
 // Table: contas
@@ -792,6 +798,8 @@ export const Constants = {
 //   Policy "usuarios_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (id = auth.uid())
 // Table: usuarios_pf
+//   Policy "usuarios_pf_admin_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
 //   Policy "usuarios_pf_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
 //   Policy "usuarios_pf_select" (SELECT, PERMISSIVE) roles={authenticated}
@@ -799,6 +807,8 @@ export const Constants = {
 //   Policy "usuarios_pf_update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 // Table: usuarios_pj
+//   Policy "usuarios_pj_admin_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
 //   Policy "usuarios_pj_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
 //   Policy "usuarios_pj_select" (SELECT, PERMISSIVE) roles={authenticated}
