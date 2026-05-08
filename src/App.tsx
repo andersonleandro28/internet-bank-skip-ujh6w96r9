@@ -15,6 +15,7 @@ import Register from './pages/auth/Register'
 import NotFound from './pages/NotFound'
 import ConfiguracoesTaxas from './pages/admin/ConfiguracoesTaxas'
 import GerenciarCestas from './pages/admin/GerenciarCestas'
+import Painel from './pages/admin/Painel'
 
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/transferir" element={<Transfer />} />
               <Route path="/pagar-boleto" element={<Boleto />} />
               <Route path="/carregar" element={<Carregar />} />
+              <Route path="/admin/painel" element={<Painel />} />
               <Route path="/admin/configuracoes-taxas" element={<ConfiguracoesTaxas />} />
               <Route path="/admin/gerenciar-cestas" element={<GerenciarCestas />} />
             </Route>

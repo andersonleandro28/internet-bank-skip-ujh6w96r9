@@ -10,6 +10,7 @@ import {
   LogOut,
   Wallet,
   User,
+  CheckSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -33,6 +34,7 @@ const menuItems = [
   { icon: ArrowLeftRight, label: 'Transferências & PIX', path: '/transferir' },
   { icon: Wallet, label: 'Pagamentos', path: '/pagar-boleto' },
   { icon: CreditCard, label: 'Cartões', path: '/carregar' },
+  { icon: CheckSquare, label: 'Aprovações', path: '/admin/painel' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes-taxas' },
 ]
 
