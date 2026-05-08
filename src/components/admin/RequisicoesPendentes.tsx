@@ -7,18 +7,12 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { aprovarRequisicao, reprovarRequisicao } from '@/services/admin'
 import { useAuth } from '@/hooks/use-auth'
+import { cn } from '@/lib/utils'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 
 type RequisicaoPendente = {
@@ -127,92 +121,140 @@ export function RequisicoesPendentes() {
     }
   }
 
+  const statuses = [
+    { value: 'todos', label: 'Todos os Status' },
+    { value: 'pendente', label: 'Pendentes' },
+    { value: 'aprovado', label: 'Aprovados' },
+    { value: 'reprovado', label: 'Reprovados' },
+  ]
+
+  const tipos = [
+    { value: 'todos', label: 'Todos os Tipos' },
+    { value: 'boleto', label: 'Boleto' },
+    { value: 'pix', label: 'PIX' },
+    { value: 'ted', label: 'TED' },
+    { value: 'carga_usdt', label: 'Carga USDT' },
+  ]
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-4">
-        <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-200 focus:ring-[#8B5CF6]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os Status</SelectItem>
-            <SelectItem value="pendente">Pendentes</SelectItem>
-            <SelectItem value="aprovado">Aprovados</SelectItem>
-            <SelectItem value="reprovado">Reprovados</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="px-3 sm:px-6 space-y-4">
+        <div className="flex overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {statuses.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setFiltroStatus(s.value)}
+              className={cn(
+                'px-5 py-2 rounded-full border text-sm font-medium transition-colors whitespace-nowrap',
+                filtroStatus === s.value
+                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
 
-        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-200 focus:ring-[#8B5CF6]">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os Tipos</SelectItem>
-            <SelectItem value="boleto">Boleto</SelectItem>
-            <SelectItem value="pix">PIX</SelectItem>
-            <SelectItem value="ted">TED</SelectItem>
-            <SelectItem value="carga_usdt">Carga USDT</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex overflow-x-auto gap-3 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {tipos.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setFiltroTipo(t.value)}
+              className={cn(
+                'px-5 py-2 rounded-full border text-sm font-medium transition-colors whitespace-nowrap',
+                filtroTipo === t.value
+                  ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-[#8B5CF6] hover:text-[#8B5CF6]',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        <Input
-          type="date"
-          value={filtroData}
-          onChange={(e) => setFiltroData(e.target.value)}
-          className="w-[180px] bg-white border-slate-200 focus-visible:ring-[#8B5CF6]"
-        />
-
-        {filtroData && (
-          <Button
-            variant="ghost"
-            onClick={() => setFiltroData('')}
-            className="text-sm text-slate-500 hover:text-slate-800"
-          >
-            Limpar Data
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <Input
+            type="date"
+            value={filtroData}
+            onChange={(e) => setFiltroData(e.target.value)}
+            className="max-w-[200px] bg-white border-slate-200 focus-visible:ring-[#8B5CF6] rounded-xl h-11"
+          />
+          {filtroData && (
+            <Button
+              variant="ghost"
+              onClick={() => setFiltroData('')}
+              className="text-sm text-slate-500 hover:text-slate-800"
+            >
+              Limpar Data
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-4 px-3 sm:px-6">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-32 w-full rounded-xl bg-white" />
           ))}
         </div>
       ) : requisicoes.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
-          <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-slate-900">Nenhuma requisição encontrada</h3>
-          <p className="text-slate-500">Não há transações pendentes com os filtros atuais.</p>
+        <div className="px-3 sm:px-6">
+          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+            <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-slate-900">Nenhuma requisição encontrada</h3>
+            <p className="text-slate-500">Não há transações pendentes com os filtros atuais.</p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 px-3 sm:px-6">
           {requisicoes.map((req) => (
             <Card
               key={req.id}
-              className="overflow-hidden border-l-4 border-l-[#8B5CF6] shadow-sm hover:shadow-md transition-all"
+              className={cn(
+                'overflow-hidden shadow-subtle hover:shadow-md transition-all',
+                req.status === 'pendente' && 'border-l-4 border-l-yellow-400',
+                req.status === 'aprovado' && 'border-l-4 border-l-green-500',
+                req.status === 'reprovado' && 'border-l-4 border-l-red-500',
+              )}
             >
               <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-4 flex-1">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-slate-800 text-lg">{req.cliente_nome}</span>
+                    <Badge
+                      className={cn(
+                        'text-white border-transparent px-2 py-0.5 text-xs font-medium uppercase shadow-none',
+                        req.status === 'pendente' && 'bg-yellow-500 hover:bg-yellow-600',
+                        req.status === 'aprovado' && 'bg-green-500 hover:bg-green-600',
+                        req.status === 'reprovado' && 'bg-red-500 hover:bg-red-600',
+                      )}
+                    >
+                      {req.status}
+                    </Badge>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <Badge
-                      variant="secondary"
-                      className="uppercase text-xs font-semibold bg-slate-100 text-slate-700"
+                      variant="outline"
+                      className="text-slate-600 border-slate-300 uppercase text-xs"
                     >
                       {req.tipo.replace('_', ' ')}
                     </Badge>
-                    <span className="font-medium text-slate-800 text-lg">{req.cliente_nome}</span>
+                    <span className="text-sm text-slate-500">
+                      {format(new Date(req.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                      <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-medium">
                         Valor Original
                       </div>
                       <div className="font-medium text-slate-700">{formatCurrency(req.valor)}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                      <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-medium">
                         Taxa Aplicada
                       </div>
                       <div className="font-medium text-red-500">
@@ -220,7 +262,7 @@ export function RequisicoesPendentes() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                      <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-medium">
                         Valor Total
                       </div>
                       <div className="font-bold text-[#8B5CF6]">
@@ -228,26 +270,21 @@ export function RequisicoesPendentes() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="text-sm text-slate-400">
-                    {format(new Date(req.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                  </div>
                 </div>
 
                 {req.status === 'pendente' && (
-                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
                     <Button
-                      variant="outline"
-                      className="w-full sm:w-auto border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white transition-colors h-11 px-6 shadow-sm"
                       onClick={() => handleReprovar(req.id)}
                     >
-                      <X className="w-4 h-4 mr-2" /> Reprovar
+                      <X className="w-5 h-5 mr-2" /> Reprovar
                     </Button>
                     <Button
-                      className="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors"
+                      className="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors h-11 px-6 shadow-sm"
                       onClick={() => handleAprovar(req.id)}
                     >
-                      <Check className="w-4 h-4 mr-2" /> Executado
+                      <Check className="w-5 h-5 mr-2" /> Executado
                     </Button>
                   </div>
                 )}

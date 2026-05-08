@@ -454,7 +454,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aprovar_requisicao: {
+        Args: { p_admin_id: string; req_id: string }
+        Returns: undefined
+      }
+      aprovar_usuario: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
+      reprovar_requisicao: {
+        Args: { p_admin_id: string; req_id: string }
+        Returns: undefined
+      }
+      reprovar_usuario: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       role_usuario: 'cliente' | 'admin'
@@ -755,6 +771,8 @@ export const Constants = {
 //   Policy "cestas_itens_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (cesta_id IN ( SELECT cestas_clientes.id    FROM cestas_clientes   WHERE (cestas_clientes.user_id = auth.uid())))
 // Table: contas
+//   Policy "contas_admin_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
 //   Policy "contas_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
 //   Policy "contas_select" (SELECT, PERMISSIVE) roles={authenticated}
@@ -772,6 +790,11 @@ export const Constants = {
 //   Policy "favorecidos_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (user_id = auth.uid())
 // Table: requisicoes
+//   Policy "requisicoes_admin_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//   Policy "requisicoes_admin_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 //   Policy "requisicoes_insert" (INSERT, PERMISSIVE) roles={authenticated}
 //     WITH CHECK: (user_id = auth.uid())
 //   Policy "requisicoes_select" (SELECT, PERMISSIVE) roles={authenticated}
@@ -791,6 +814,9 @@ export const Constants = {
 //     USING: is_admin()
 //     WITH CHECK: is_admin()
 // Table: usuarios
+//   Policy "usuarios_admin_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 //   Policy "usuarios_insert" (INSERT, PERMISSIVE) roles={public}
 //     WITH CHECK: true
 //   Policy "usuarios_select" (SELECT, PERMISSIVE) roles={authenticated}
@@ -817,6 +843,48 @@ export const Constants = {
 //     USING: (user_id = auth.uid())
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION aprovar_requisicao(uuid, uuid)
+//   CREATE OR REPLACE FUNCTION public.aprovar_requisicao(req_id uuid, p_admin_id uuid)
+//    RETURNS void
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     UPDATE public.requisicoes
+//     SET status = 'aprovado', processed_by = p_admin_id, processed_at = NOW()
+//     WHERE id = req_id;
+//
+//     -- Insert auditoria
+//     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
+//     VALUES (p_admin_id, 'aprovou_requisicao', 'requisicoes', req_id);
+//   END;
+//   $function$
+//
+// FUNCTION aprovar_usuario(uuid, uuid)
+//   CREATE OR REPLACE FUNCTION public.aprovar_usuario(p_user_id uuid, p_admin_id uuid)
+//    RETURNS void
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     v_cesta_id uuid;
+//   BEGIN
+//     -- Update usuario
+//     UPDATE public.usuarios SET status = 'aprovado' WHERE id = p_user_id;
+//
+//     -- Create default cesta if not exists
+//     IF NOT EXISTS (SELECT 1 FROM public.cestas_clientes WHERE user_id = p_user_id AND nome = 'Cesta Padrão') THEN
+//       INSERT INTO public.cestas_clientes (user_id, nome, ativo)
+//       VALUES (p_user_id, 'Cesta Padrão', true)
+//       RETURNING id INTO v_cesta_id;
+//     END IF;
+//
+//     -- Insert auditoria
+//     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
+//     VALUES (p_admin_id, 'aprovou_usuario', 'usuarios', p_user_id);
+//   END;
+//   $function$
+//
 // FUNCTION handle_new_user()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user()
 //    RETURNS trigger
@@ -856,6 +924,54 @@ export const Constants = {
 //       FROM public.usuarios
 //       WHERE id = auth.uid() AND role = 'admin'
 //     );
+//   END;
+//   $function$
+//
+// FUNCTION reprovar_requisicao(uuid, uuid)
+//   CREATE OR REPLACE FUNCTION public.reprovar_requisicao(req_id uuid, p_admin_id uuid)
+//    RETURNS void
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     v_req record;
+//   BEGIN
+//     -- get the request
+//     SELECT * INTO v_req FROM public.requisicoes WHERE id = req_id;
+//
+//     IF v_req.status != 'pendente' THEN
+//       RAISE EXCEPTION 'Requisição não está pendente';
+//     END IF;
+//
+//     -- update requisicao
+//     UPDATE public.requisicoes
+//     SET status = 'reprovado', processed_by = p_admin_id, processed_at = NOW()
+//     WHERE id = req_id;
+//
+//     -- return balance to the user
+//     UPDATE public.contas
+//     SET saldo = saldo + v_req.valor_total
+//     WHERE user_id = v_req.user_id;
+//
+//     -- insert auditoria
+//     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
+//     VALUES (p_admin_id, 'reprovou_requisicao', 'requisicoes', req_id);
+//   END;
+//   $function$
+//
+// FUNCTION reprovar_usuario(uuid, uuid)
+//   CREATE OR REPLACE FUNCTION public.reprovar_usuario(p_user_id uuid, p_admin_id uuid)
+//    RETURNS void
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     -- Update usuario
+//     UPDATE public.usuarios SET status = 'reprovado' WHERE id = p_user_id;
+//
+//     -- Insert auditoria
+//     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
+//     VALUES (p_admin_id, 'reprovou_usuario', 'usuarios', p_user_id);
 //   END;
 //   $function$
 //
