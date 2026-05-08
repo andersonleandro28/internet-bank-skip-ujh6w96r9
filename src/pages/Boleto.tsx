@@ -35,7 +35,7 @@ export default function BoletoPage() {
         .from('servicos')
         .select('id')
         .ilike('nome', '%Boleto%')
-        .single()
+        .maybeSingle()
 
       if (servico && user) {
         const { data: cesta } = await supabase
@@ -43,7 +43,7 @@ export default function BoletoPage() {
           .select('id')
           .eq('user_id', user.id)
           .eq('ativo', true)
-          .single()
+          .maybeSingle()
 
         if (cesta) {
           const { data: item } = await supabase
@@ -52,7 +52,7 @@ export default function BoletoPage() {
             .eq('cesta_id', cesta.id)
             .eq('servico_id', servico.id)
             .eq('ativo', true)
-            .single()
+            .maybeSingle()
 
           if (item)
             setTaxas({ percentual: Number(item.taxa_percentual), fixa: Number(item.taxa_fixa) })
