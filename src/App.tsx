@@ -19,6 +19,8 @@ import GerenciarCestas from './pages/admin/GerenciarCestas'
 import Painel from './pages/admin/Painel'
 import Depositar from './pages/admin/Depositar'
 import Auditoria from './pages/admin/Auditoria'
+import Clientes from './pages/admin/Clientes'
+import ClientePerfil from './pages/admin/ClientePerfil'
 
 import { AuthProvider } from '@/hooks/use-auth'
 import { BankProvider } from '@/hooks/use-bank'
@@ -59,6 +61,8 @@ const App = () => (
                 <Route path="/admin/gerenciar-cestas" element={<GerenciarCestas />} />
                 <Route path="/admin/depositar" element={<Depositar />} />
                 <Route path="/admin/auditoria" element={<Auditoria />} />
+                <Route path="/admin/clientes" element={<Clientes />} />
+                <Route path="/admin/clientes/:id" element={<ClientePerfil />} />
               </Route>
             </Route>
 
