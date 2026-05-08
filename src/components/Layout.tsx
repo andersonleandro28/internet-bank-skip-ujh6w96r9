@@ -72,7 +72,7 @@ export default function Layout() {
     }
   }, [user])
 
-  const menuItems = isAdmin ? [...baseMenuItems, ...adminMenuItems] : baseMenuItems
+  const menuItems = isAdmin ? adminMenuItems : baseMenuItems
 
   const userFirstName =
     user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'

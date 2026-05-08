@@ -1,17 +1,55 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { FileText, ArrowLeftRight, User, Barcode, Coins } from 'lucide-react'
+import {
+  FileText,
+  ArrowLeftRight,
+  User,
+  Barcode,
+  Coins,
+  CheckSquare,
+  Users,
+  CircleDollarSign,
+  Settings,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 
 export function MobileNav() {
   const location = useLocation()
+  const { user } = useAuth()
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  const navItems = [
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('usuarios')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          setIsAdmin(data?.role === 'admin')
+        })
+    }
+  }, [user])
+
+  const customerNavItems = [
     { icon: FileText, label: 'Extrato', path: '/extrato' },
     { icon: Barcode, label: 'Pagamentos', path: '/pagar-boleto' },
     { icon: Coins, label: 'Cartões', path: '/carregar' },
     { icon: ArrowLeftRight, label: 'Transferir', path: '/transferir' },
     { icon: User, label: 'Perfil', path: '/perfil' },
   ]
+
+  const adminNavItems = [
+    { icon: CheckSquare, label: 'Aprovações', path: '/admin/painel' },
+    { icon: Users, label: 'Clientes', path: '/admin/clientes' },
+    { icon: CircleDollarSign, label: 'Depósitos', path: '/admin/depositar' },
+    { icon: Settings, label: 'Config.', path: '/admin/configuracoes-taxas' },
+    { icon: User, label: 'Perfil', path: '/perfil' },
+  ]
+
+  const navItems = isAdmin ? adminNavItems : customerNavItems
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 h-[80px] p-3 md:hidden">

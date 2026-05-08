@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LogOut, RefreshCcw, Loader2, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useBank } from '@/hooks/use-bank'
@@ -7,9 +8,16 @@ import { formatCurrency } from '@/lib/format'
 
 export default function Index() {
   const { conta, usuario, loading, error, refreshData } = useBank()
+  const navigate = useNavigate()
 
   const [animatedBalance, setAnimatedBalance] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
+
+  useEffect(() => {
+    if (usuario?.role === 'admin') {
+      navigate('/admin/painel', { replace: true })
+    }
+  }, [usuario, navigate])
 
   useEffect(() => {
     if (conta?.saldo !== undefined) {
@@ -35,6 +43,10 @@ export default function Index() {
       return () => clearInterval(interval)
     }
   }, [conta?.saldo])
+
+  if (usuario?.role === 'admin') {
+    return null
+  }
 
   if (loading) {
     return (
