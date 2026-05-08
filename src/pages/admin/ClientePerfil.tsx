@@ -71,6 +71,50 @@ export default function ClientePerfil() {
   const saldo = cliente.contas?.saldo || 0
   const saldoBloqueado = cliente.contas?.saldo_bloqueado || 0
 
+  const parseUrls = (urlData: string | null) => {
+    if (!urlData) return []
+    try {
+      const parsed = JSON.parse(urlData)
+      if (Array.isArray(parsed)) return parsed
+      return [urlData]
+    } catch {
+      if (urlData.includes(',') && urlData.startsWith('http')) {
+        return urlData.split(',').map((s) => s.trim())
+      }
+      return [urlData]
+    }
+  }
+
+  const formatUrl = (u: string) => {
+    if (!u) return ''
+    if (u.startsWith('http')) return u
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL
+    const path = u.startsWith('/') ? u.substring(1) : u
+    if (path.includes('storage/v1/')) return `${baseUrl}/${path}`
+    return `${baseUrl}/storage/v1/object/public/${path}`
+  }
+
+  const renderDocumentLinks = (urlData: string | null, label: string, icon: React.ReactNode) => {
+    const urls = parseUrls(urlData)
+    if (urls.length === 0) return null
+
+    return (
+      <div className="space-y-2 mt-2">
+        {urls.map((u, i) => (
+          <a
+            key={i}
+            href={formatUrl(u)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
+          >
+            {icon} {urls.length > 1 ? `${label} ${i + 1}` : label}
+          </a>
+        ))}
+      </div>
+    )
+  }
+
   const statusBadge = (status: string) => {
     if (status === 'aprovado' || status === 'confirmado' || status === 'concluido') {
       return <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white">{status}</Badge>
@@ -153,32 +197,26 @@ export default function ClientePerfil() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {cliente.usuarios_pf[0].selfie_url && (
                     <div className="p-4 border rounded-xl bg-slate-50">
-                      <span className="text-sm font-medium text-slate-700 block mb-2">
+                      <span className="text-sm font-medium text-slate-700 block">
                         Selfie do Usuário
                       </span>
-                      <a
-                        href={cliente.usuarios_pf[0].selfie_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-                      >
-                        <FileImage className="w-4 h-4" /> Visualizar Imagem
-                      </a>
+                      {renderDocumentLinks(
+                        cliente.usuarios_pf[0].selfie_url,
+                        'Visualizar Imagem',
+                        <FileImage className="w-4 h-4" />,
+                      )}
                     </div>
                   )}
                   {cliente.usuarios_pf[0].documento_identidade_url && (
                     <div className="p-4 border rounded-xl bg-slate-50">
-                      <span className="text-sm font-medium text-slate-700 block mb-2">
+                      <span className="text-sm font-medium text-slate-700 block">
                         Documento de Identidade
                       </span>
-                      <a
-                        href={cliente.usuarios_pf[0].documento_identidade_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-                      >
-                        <FileImage className="w-4 h-4" /> Visualizar Documento
-                      </a>
+                      {renderDocumentLinks(
+                        cliente.usuarios_pf[0].documento_identidade_url,
+                        'Visualizar Documento',
+                        <FileImage className="w-4 h-4" />,
+                      )}
                     </div>
                   )}
                   {!cliente.usuarios_pf[0].selfie_url &&
@@ -195,17 +233,14 @@ export default function ClientePerfil() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {cliente.usuarios_pj[0].documentos_url ? (
                         <div className="p-4 border rounded-xl bg-slate-50">
-                          <span className="text-sm font-medium text-slate-700 block mb-2">
+                          <span className="text-sm font-medium text-slate-700 block">
                             Contrato Social / Outros
                           </span>
-                          <a
-                            href={cliente.usuarios_pj[0].documentos_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-                          >
-                            <FileText className="w-4 h-4" /> Visualizar Documentos
-                          </a>
+                          {renderDocumentLinks(
+                            cliente.usuarios_pj[0].documentos_url,
+                            'Visualizar Documentos',
+                            <FileText className="w-4 h-4" />,
+                          )}
                         </div>
                       ) : (
                         <p className="text-sm text-slate-500">Nenhum documento anexado.</p>
@@ -244,32 +279,26 @@ export default function ClientePerfil() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {cliente.usuarios_pj[0].resp_selfie_url && (
                         <div className="p-4 border rounded-xl bg-slate-50">
-                          <span className="text-sm font-medium text-slate-700 block mb-2">
+                          <span className="text-sm font-medium text-slate-700 block">
                             Selfie (Responsável)
                           </span>
-                          <a
-                            href={cliente.usuarios_pj[0].resp_selfie_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-                          >
-                            <FileImage className="w-4 h-4" /> Visualizar Imagem
-                          </a>
+                          {renderDocumentLinks(
+                            cliente.usuarios_pj[0].resp_selfie_url,
+                            'Visualizar Imagem',
+                            <FileImage className="w-4 h-4" />,
+                          )}
                         </div>
                       )}
                       {cliente.usuarios_pj[0].resp_documento_url && (
                         <div className="p-4 border rounded-xl bg-slate-50">
-                          <span className="text-sm font-medium text-slate-700 block mb-2">
+                          <span className="text-sm font-medium text-slate-700 block">
                             Doc. Identidade (Responsável)
                           </span>
-                          <a
-                            href={cliente.usuarios_pj[0].resp_documento_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary hover:underline text-sm flex items-center gap-2 font-medium"
-                          >
-                            <FileImage className="w-4 h-4" /> Visualizar Documento
-                          </a>
+                          {renderDocumentLinks(
+                            cliente.usuarios_pj[0].resp_documento_url,
+                            'Visualizar Documento',
+                            <FileImage className="w-4 h-4" />,
+                          )}
                         </div>
                       )}
                     </div>
