@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import {
   getPerfilUsuario,
-  getHistoricoLogins,
   getSpreadUSDT,
   updateSpreadUSDT,
   getLimiteAlertaSaldo,
@@ -14,20 +13,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import {
   ArrowLeft,
   LogOut,
-  ShieldCheck,
-  Clock,
-  MonitorSmartphone,
   Settings,
   SlidersHorizontal,
   Package,
   LayoutDashboard,
   FileText,
   User,
+  Upload,
+  Trash2,
+  Save,
 } from 'lucide-react'
 
 export default function Perfil() {
@@ -40,11 +38,32 @@ export default function Perfil() {
 
   const [perfil, setPerfil] = useState<any>(null)
   const [detalhes, setDetalhes] = useState<any>(null)
-  const [historico, setHistorico] = useState<any[]>([])
 
   const [spreadUSDT, setSpreadUSDT] = useState<number>(0)
   const [limiteAlerta, setLimiteAlerta] = useState<number>(500)
   const [savingConfigs, setSavingConfigs] = useState(false)
+
+  // Customer Profile States (Mocked initially as requested)
+  const [formData, setFormData] = useState({
+    nome: 'Anderson Leandro',
+    email: 'andersonleandro28@gmail.com',
+    telefone: '(11) 98765-4321',
+    cpf: '123.456.789-00',
+    dataNascimento: '1990-03-15',
+    rua: 'Rua das Flores',
+    numero: '123',
+    complemento: 'Apto 456',
+    cep: '01234-567',
+    cidade: 'São Paulo',
+    estado: 'SP',
+  })
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [passwords, setPasswords] = useState({
+    atual: '',
+    nova: '',
+    confirmacao: '',
+  })
 
   const loadData = async () => {
     if (!user) return
@@ -62,8 +81,18 @@ export default function Perfil() {
         const limite = await getLimiteAlertaSaldo()
         setLimiteAlerta(limite)
       } else {
-        const hist = await getHistoricoLogins(user.id)
-        setHistorico(hist)
+        // Update mock data with real data if available
+        setFormData((prev) => ({
+          ...prev,
+          nome: detalhes?.nome || detalhes?.razao_social || prev.nome,
+          email: usuario.email || prev.email,
+          cpf: detalhes?.cpf || detalhes?.cnpj || prev.cpf,
+          dataNascimento: detalhes?.data_nascimento || prev.dataNascimento,
+        }))
+        if (detalhes?.selfie_url || detalhes?.documentos_url) {
+          setAvatarUrl(detalhes.selfie_url || detalhes.documentos_url)
+          setPreviewUrl(detalhes.selfie_url || detalhes.documentos_url)
+        }
       }
     } catch (err: any) {
       setError('Não foi possível carregar os dados do perfil.')
@@ -104,9 +133,73 @@ export default function Perfil() {
     }
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setPreviewUrl(event.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleDeleteImage = () => {
+    setPreviewUrl(null)
+  }
+
+  const handleCustomerSave = () => {
+    if (!formData.nome || !formData.email || !formData.telefone) {
+      toast({
+        title: 'Erro de validação',
+        description: 'Por favor, preencha os campos obrigatórios (Nome, Email, Telefone).',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (passwords.nova && passwords.nova !== passwords.confirmacao) {
+      toast({
+        title: 'Erro de validação',
+        description: 'A nova senha e a confirmação não coincidem.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setAvatarUrl(previewUrl)
+    setPasswords({ atual: '', nova: '', confirmacao: '' })
+    toast({
+      title: 'Sucesso',
+      description: 'Seus dados foram atualizados com sucesso.',
+    })
+  }
+
+  const handleCustomerCancel = () => {
+    setFormData((prev) => ({
+      ...prev,
+      nome: detalhes?.nome || detalhes?.razao_social || 'Anderson Leandro',
+      email: perfil?.email || 'andersonleandro28@gmail.com',
+      telefone: '(11) 98765-4321',
+      cpf: detalhes?.cpf || detalhes?.cnpj || '123.456.789-00',
+      dataNascimento: detalhes?.data_nascimento || '1990-03-15',
+      rua: 'Rua das Flores',
+      numero: '123',
+      complemento: 'Apto 456',
+      cep: '01234-567',
+      cidade: 'São Paulo',
+      estado: 'SP',
+    }))
+    setPreviewUrl(avatarUrl)
+    setPasswords({ atual: '', nova: '', confirmacao: '' })
+    toast({
+      description: 'Alterações canceladas.',
+    })
+  }
+
   if (loading) {
     return (
-      <div className="container max-w-md mx-auto p-4 pb-24 space-y-4">
+      <div className="container max-w-2xl mx-auto p-4 pb-24 space-y-4">
         <div className="flex items-center gap-2 mb-6">
           <Skeleton className="h-8 w-8 rounded-full" />
           <Skeleton className="h-8 w-32" />
@@ -120,7 +213,7 @@ export default function Perfil() {
 
   if (error) {
     return (
-      <div className="container max-w-md mx-auto p-4 pb-24 flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+      <div className="container max-w-2xl mx-auto p-4 pb-24 flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <div className="text-destructive text-center">
           <Settings className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>{error}</p>
@@ -134,7 +227,7 @@ export default function Perfil() {
 
   if (!perfil) {
     return (
-      <div className="container max-w-md mx-auto p-4 pb-24 text-center text-muted-foreground mt-10">
+      <div className="container max-w-2xl mx-auto p-4 pb-24 text-center text-muted-foreground mt-10">
         Dados não encontrados.
       </div>
     )
@@ -142,8 +235,357 @@ export default function Perfil() {
 
   const isAdmin = perfil.role === 'admin'
 
+  const renderAdminView = () => (
+    <div className="space-y-6 max-w-md mx-auto">
+      <Card className="border-slate-100 shadow-sm">
+        <CardHeader className="p-6 pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="w-5 h-5 text-primary" />
+            Configurações Globais
+          </CardTitle>
+          <CardDescription>Ajuste os parâmetros gerais do sistema.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="spread">Spread USDT (%)</Label>
+              <Input
+                id="spread"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={spreadUSDT}
+                onChange={(e) => setSpreadUSDT(Number(e.target.value))}
+                className="text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="limite_alerta">Limite de Alerta de Saldo (R$)</Label>
+              <Input
+                id="limite_alerta"
+                type="number"
+                min="0"
+                step="1"
+                value={limiteAlerta}
+                onChange={(e) => setLimiteAlerta(Number(e.target.value))}
+                className="text-lg"
+              />
+            </div>
+          </div>
+          <Button onClick={handleSaveConfigs} disabled={savingConfigs} className="w-full">
+            {savingConfigs ? 'Salvando...' : 'Salvar Configurações'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-100 shadow-sm">
+        <CardHeader className="p-6 pb-4">
+          <CardTitle className="text-lg">Navegação Administrativa</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 pt-0 grid gap-3">
+          <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
+            <Link to="/admin/painel">
+              <LayoutDashboard className="w-5 h-5 mr-3 text-slate-500" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium">Painel Administrativo</span>
+                <span className="text-xs text-slate-500 font-normal">Visão geral do sistema</span>
+              </div>
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
+            <Link to="/admin/configuracoes-taxas">
+              <SlidersHorizontal className="w-5 h-5 mr-3 text-slate-500" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium">Configurar Serviços e Taxas</span>
+                <span className="text-xs text-slate-500 font-normal">Gerenciar taxas padrão</span>
+              </div>
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
+            <Link to="/admin/gerenciar-cestas">
+              <Package className="w-5 h-5 mr-3 text-slate-500" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium">Gerenciar Cestas de Clientes</span>
+                <span className="text-xs text-slate-500 font-normal">Cestas personalizadas</span>
+              </div>
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
+            <Link to="/admin/auditoria">
+              <FileText className="w-5 h-5 mr-3 text-slate-500" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium">Auditoria</span>
+                <span className="text-xs text-slate-500 font-normal">
+                  Logs de atividades e ações
+                </span>
+              </div>
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Button variant="destructive" className="w-full h-12" onClick={handleLogout}>
+        <LogOut className="w-5 h-5 mr-2" />
+        Sair do Sistema
+      </Button>
+    </div>
+  )
+
+  const renderCustomerView = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col items-center justify-center mb-8 pt-4">
+        <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-4 border-[#1a4d2e] bg-slate-100 flex items-center justify-center shadow-md">
+          {previewUrl ? (
+            <img src={previewUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-4xl font-bold text-[#1a4d2e]">
+              {formData.nome
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase()}
+            </span>
+          )}
+        </div>
+        <h2 className="mt-4 text-2xl font-bold text-slate-800 text-center leading-tight">
+          {formData.nome}
+        </h2>
+        <p className="text-slate-500 text-sm mt-1">{formData.email}</p>
+      </div>
+
+      {/* Seção 1: Dados Pessoais */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="bg-[#1a4d2e] text-white p-4">
+          <CardTitle className="text-lg">Dados Pessoais</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">
+                Nome Completo <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telefone">
+                Telefone <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                value={formData.cpf}
+                disabled
+                className="bg-slate-50 cursor-not-allowed"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+              <Input
+                id="dataNascimento"
+                type="date"
+                value={formData.dataNascimento}
+                onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 mt-4">
+            <h3 className="text-sm font-semibold text-slate-700 mb-4">Endereço</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cep">CEP</Label>
+                <Input
+                  id="cep"
+                  value={formData.cep}
+                  onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="rua">Rua</Label>
+                <Input
+                  id="rua"
+                  value={formData.rua}
+                  onChange={(e) => setFormData({ ...formData, rua: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numero">Número</Label>
+                <Input
+                  id="numero"
+                  value={formData.numero}
+                  onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="complemento">Complemento</Label>
+                <Input
+                  id="complemento"
+                  value={formData.complemento}
+                  onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cidade">Cidade</Label>
+                <Input
+                  id="cidade"
+                  value={formData.cidade}
+                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado</Label>
+                <Input
+                  id="estado"
+                  value={formData.estado}
+                  onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seção 2: Foto de Perfil */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="bg-[#1a4d2e] text-white p-4">
+          <CardTitle className="text-lg">Foto de Perfil</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+              {previewUrl ? (
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[#1a4d2e]">
+                  <User className="w-8 h-8" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label
+                htmlFor="foto"
+                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Carregar Nova Foto
+              </Label>
+              <Input
+                id="foto"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              {previewUrl && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
+                  onClick={handleDeleteImage}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remover
+                </Button>
+              )}
+              <p className="text-xs text-slate-500">Recomendado: JPG, PNG. Tamanho máximo 2MB.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seção 3: Segurança */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="bg-[#1a4d2e] text-white p-4">
+          <CardTitle className="text-lg">Segurança</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="senhaAtual">Senha Atual</Label>
+            <Input
+              id="senhaAtual"
+              type="password"
+              value={passwords.atual}
+              onChange={(e) => setPasswords({ ...passwords, atual: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="novaSenha">Nova Senha</Label>
+              <Input
+                id="novaSenha"
+                type="password"
+                value={passwords.nova}
+                onChange={(e) => setPasswords({ ...passwords, nova: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmacaoSenha">Confirmar Nova Senha</Label>
+              <Input
+                id="confirmacaoSenha"
+                type="password"
+                value={passwords.confirmacao}
+                onChange={(e) => setPasswords({ ...passwords, confirmacao: e.target.value })}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer Botões */}
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 pb-8">
+        <Button variant="outline" className="w-full sm:w-auto" onClick={handleCustomerCancel}>
+          Cancelar
+        </Button>
+        <Button
+          className="w-full sm:w-auto bg-[#7fff00] text-[#1a4d2e] hover:bg-[#6be600] font-bold"
+          onClick={handleCustomerSave}
+        >
+          <Save className="w-4 h-4 mr-2" />
+          Salvar Alterações
+        </Button>
+      </div>
+
+      {/* Signout separately */}
+      <div className="pt-2 border-t border-slate-100">
+        <Button
+          variant="ghost"
+          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 h-12"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+          Sair da Conta
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="container max-w-md mx-auto p-4 pb-24">
+    <div className="container max-w-2xl mx-auto p-4 pb-24">
       <div className="flex items-center gap-3 mb-6">
         <Button
           variant="ghost"
@@ -154,219 +596,11 @@ export default function Perfil() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
-          {isAdmin ? 'Configurações' : 'Perfil'}
+          {isAdmin ? 'Configurações' : 'Meu Perfil'}
         </h1>
       </div>
 
-      {isAdmin ? (
-        <div className="space-y-6">
-          <Card className="border-slate-100 shadow-sm">
-            <CardHeader className="p-6 pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Settings className="w-5 h-5 text-primary" />
-                Configurações Globais
-              </CardTitle>
-              <CardDescription>Ajuste os parâmetros gerais do sistema.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="spread">Spread USDT (%)</Label>
-                  <Input
-                    id="spread"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={spreadUSDT}
-                    onChange={(e) => setSpreadUSDT(Number(e.target.value))}
-                    className="text-lg"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="limite_alerta">Limite de Alerta de Saldo (R$)</Label>
-                  <Input
-                    id="limite_alerta"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={limiteAlerta}
-                    onChange={(e) => setLimiteAlerta(Number(e.target.value))}
-                    className="text-lg"
-                  />
-                </div>
-              </div>
-              <Button onClick={handleSaveConfigs} disabled={savingConfigs} className="w-full">
-                {savingConfigs ? 'Salvando...' : 'Salvar Configurações'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-100 shadow-sm">
-            <CardHeader className="p-6 pb-4">
-              <CardTitle className="text-lg">Navegação Administrativa</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-0 grid gap-3">
-              <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
-                <Link to="/admin/painel">
-                  <LayoutDashboard className="w-5 h-5 mr-3 text-slate-500" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">Painel Administrativo</span>
-                    <span className="text-xs text-slate-500 font-normal">
-                      Visão geral do sistema
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
-                <Link to="/admin/configuracoes-taxas">
-                  <SlidersHorizontal className="w-5 h-5 mr-3 text-slate-500" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">Configurar Serviços e Taxas</span>
-                    <span className="text-xs text-slate-500 font-normal">
-                      Gerenciar taxas padrão
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
-                <Link to="/admin/gerenciar-cestas">
-                  <Package className="w-5 h-5 mr-3 text-slate-500" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">Gerenciar Cestas de Clientes</span>
-                    <span className="text-xs text-slate-500 font-normal">
-                      Cestas personalizadas
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start h-auto py-3 px-4" asChild>
-                <Link to="/admin/auditoria">
-                  <FileText className="w-5 h-5 mr-3 text-slate-500" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">Auditoria</span>
-                    <span className="text-xs text-slate-500 font-normal">
-                      Logs de atividades e ações
-                    </span>
-                  </div>
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Button variant="destructive" className="w-full h-12" onClick={handleLogout}>
-            <LogOut className="w-5 h-5 mr-2" />
-            Sair do Sistema
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <Card className="border-slate-100 shadow-sm overflow-hidden">
-            <div className="h-28 bg-gradient-to-r from-primary/90 to-primary relative overflow-hidden">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent"></div>
-            </div>
-            <CardContent className="pt-0 relative px-6 pb-6">
-              <div className="absolute -top-14 left-6">
-                <div className="w-28 h-28 rounded-full border-4 border-white bg-slate-100 overflow-hidden flex items-center justify-center shadow-md">
-                  {detalhes?.selfie_url || detalhes?.documentos_url ? (
-                    <img
-                      src={detalhes.selfie_url || detalhes.documentos_url}
-                      alt="Perfil"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-slate-400" />
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-16">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 pr-4">
-                    <h2 className="text-xl font-bold text-slate-800 leading-tight">
-                      {detalhes?.nome || detalhes?.razao_social || 'Usuário'}
-                    </h2>
-                    <p className="text-sm text-slate-500 mt-1 truncate">{perfil.email}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      perfil.status === 'aprovado'
-                        ? 'default'
-                        : perfil.status === 'pendente'
-                          ? 'secondary'
-                          : 'destructive'
-                    }
-                    className="capitalize mt-1 shrink-0"
-                  >
-                    {perfil.status}
-                  </Badge>
-                </div>
-
-                <div className="mt-6 bg-slate-50/50 rounded-xl p-4 border border-slate-100 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-500">Documento</span>
-                    <span className="text-sm font-semibold text-slate-700">
-                      {detalhes?.cpf || detalhes?.cnpj || '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                    <span className="text-sm text-slate-500">Tipo de Conta</span>
-                    <span className="text-sm font-semibold text-slate-700">{perfil.tipo}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Button
-            variant="outline"
-            className="w-full h-12 text-destructive border-destructive/20 hover:text-destructive hover:bg-destructive/5"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Sair da Conta
-          </Button>
-
-          <div className="space-y-4 mt-10">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-800 px-1">
-              <ShieldCheck className="w-5 h-5 text-primary" />
-              Histórico de Logins
-            </h3>
-
-            {historico.length === 0 ? (
-              <div className="text-center p-8 bg-slate-50 border border-slate-100 rounded-2xl text-slate-500 text-sm">
-                Nenhum registro de login recente encontrado.
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {historico.map((log) => (
-                  <div
-                    key={log.id}
-                    className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex items-start gap-3 transition-colors hover:bg-slate-50"
-                  >
-                    <div className="p-2 bg-slate-100 rounded-lg shrink-0">
-                      <MonitorSmartphone className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">
-                        {log.dispositivo || 'Dispositivo Desconhecido'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
-                        <Clock className="w-3 h-3 shrink-0" />
-                        <span className="truncate">
-                          {new Date(log.created_at).toLocaleString('pt-BR')}
-                        </span>
-                        <span className="shrink-0">•</span>
-                        <span className="truncate">IP: {log.ip || 'Não detectado'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {isAdmin ? renderAdminView() : renderCustomerView()}
     </div>
   )
 }
