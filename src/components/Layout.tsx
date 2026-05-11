@@ -31,6 +31,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { MobileNav } from '@/components/mobile-nav'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
 import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
@@ -74,8 +82,14 @@ export default function Layout() {
 
   const menuItems = isAdmin ? adminMenuItems : baseMenuItems
 
-  const userFirstName =
-    user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'
+  const fullName = user?.user_metadata?.name || 'Anderson Leandro'
+  const userFirstName = fullName.split(' ')[0] || user?.email?.split('@')[0] || 'Anderson'
+  const initials = fullName
+    .split(' ')
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 
   const handleLogout = async () => {
     await signOut()
@@ -156,27 +170,52 @@ export default function Layout() {
             <div className="flex items-center gap-2 md:gap-6">
               <NotificationsSheet />
 
-              <button
-                onClick={handleLogout}
-                className="md:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-              >
-                <LogOut className="w-6 h-6" />
-              </button>
-
-              <div className="hidden md:flex items-center gap-4">
-                <div className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-100">
-                  <div className="hidden md:flex flex-col items-end">
-                    <span className="text-sm font-medium leading-none">{userFirstName}</span>
-                    <span className="text-xs text-muted-foreground mt-1">Conta Corrente</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="outline-none">
+                  <div className="flex items-center gap-3 pl-2 md:pl-6 md:border-l border-slate-100 cursor-pointer group">
+                    <div className="hidden md:flex flex-col items-end">
+                      <span className="text-sm font-medium leading-none group-hover:text-[#1a4d2e] transition-colors">
+                        {userFirstName}
+                      </span>
+                      <span className="text-xs text-muted-foreground mt-1">Conta Corrente</span>
+                    </div>
+                    <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-[#7fff00] transition-colors">
+                      <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=1" />
+                      <AvatarFallback className="bg-[#1a4d2e] text-[#7fff00] font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                  <Avatar className="h-9 w-9 border border-slate-100">
-                    <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=1" />
-                    <AvatarFallback>
-                      <User className="w-4 h-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-white border-slate-200 shadow-lg"
+                >
+                  <DropdownMenuLabel className="text-[#1a4d2e]">Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer hover:bg-[#7fff00]/20 focus:bg-[#7fff00]/20 text-[#1a4d2e]"
+                  >
+                    <Link to="/perfil" className="w-full flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Editar Perfil</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-[#7fff00]/20 focus:bg-[#7fff00]/20 text-[#1a4d2e]">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
