@@ -32,7 +32,7 @@ Deno.serve(async () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'onboarding@resend.dev',
+            from: 'ACLOP <contato@aclop.com.br>',
             to: [email.email],
             subject: email.assunto,
             html: email.template,

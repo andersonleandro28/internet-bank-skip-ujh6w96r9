@@ -16,10 +16,10 @@ Deno.serve(async () => {
     }
 
     const payload = {
-      from: 'onboarding@resend.dev',
+      from: 'ACLOP <contato@aclop.com.br>',
       to: ['andersonleandro28@gmail.com'],
-      subject: 'Teste Aclop (Remetente Padrão)',
-      html: '<h1>Teste funcionando com onboarding@resend.dev</h1>',
+      subject: 'Teste Aclop (Remetente Oficial)',
+      html: '<h1>Teste funcionando com contato@aclop.com.br</h1>',
     }
 
     const res = await fetch('https://api.resend.com/emails', {

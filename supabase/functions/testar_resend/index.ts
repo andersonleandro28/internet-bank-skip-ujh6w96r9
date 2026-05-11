@@ -21,10 +21,10 @@ Deno.serve(async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev',
+        from: 'ACLOP <contato@aclop.com.br>',
         to: ['andersonleandro28@gmail.com'],
-        subject: 'Teste Aclop (Remetente Padrão)',
-        html: '<h1>Teste funcionando com onboarding@resend.dev</h1>',
+        subject: 'Teste Aclop (Remetente Oficial)',
+        html: '<h1>Teste funcionando com contato@aclop.com.br</h1>',
       }),
     })
 

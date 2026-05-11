@@ -1,13 +1,13 @@
 {
   "_versions": {
-    "enviar_email_confirmacao_cadastro": 3,
-    "enviar_email_requisicao_processada": 3,
-    "enviar_email_deposito_creditado": 3,
-    "enviar_email_alerta_saldo_baixo": 3,
-    "enviar_relatorio_mensal": 3,
-    "retry_emails_pendentes": 4,
-    "testar_resend": 4,
-    "testar_resend_detalhado": 4,
-    "testar_api_key": 1
+    "enviar_email_confirmacao_cadastro": 5,
+    "enviar_email_requisicao_processada": 5,
+    "enviar_email_deposito_creditado": 5,
+    "enviar_email_alerta_saldo_baixo": 5,
+    "enviar_relatorio_mensal": 5,
+    "retry_emails_pendentes": 6,
+    "testar_resend": 6,
+    "testar_resend_detalhado": 6,
+    "testar_api_key": 2
   }
 }
