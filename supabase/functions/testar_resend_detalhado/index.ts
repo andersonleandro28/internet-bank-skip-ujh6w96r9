@@ -16,10 +16,10 @@ Deno.serve(async () => {
     }
 
     const payload = {
-      from: 'Aclop Bank <noreply@seaconnection.com.br>',
+      from: 'onboarding@resend.dev',
       to: ['andersonleandro28@gmail.com'],
-      subject: 'Teste Aclop',
-      html: '<h1>Teste funcionando</h1>',
+      subject: 'Teste Aclop (Remetente Padrão)',
+      html: '<h1>Teste funcionando com onboarding@resend.dev</h1>',
     }
 
     const res = await fetch('https://api.resend.com/emails', {
@@ -39,7 +39,7 @@ Deno.serve(async () => {
     let parsedBody
     try {
       parsedBody = JSON.parse(bodyText)
-    } catch (e) {
+    } catch {
       parsedBody = bodyText
     }
 
@@ -64,12 +64,12 @@ Deno.serve(async () => {
         { status: res.status, headers: { 'Content-Type': 'application/json' } },
       )
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Exceção:', error)
     return new Response(
       JSON.stringify({
         sucesso: false,
-        erro: error.message,
+        erro: error instanceof Error ? error.message : 'Erro desconhecido',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )

@@ -75,7 +75,7 @@ export async function sendEmail({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Aclop Bank <noreply@seaconnection.com.br>',
+          from: 'onboarding@resend.dev',
           to: [to],
           subject,
           html,

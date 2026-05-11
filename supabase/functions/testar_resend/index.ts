@@ -21,10 +21,10 @@ Deno.serve(async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Aclop Bank <noreply@seaconnection.com.br>',
+        from: 'onboarding@resend.dev',
         to: ['andersonleandro28@gmail.com'],
-        subject: 'Teste Aclop',
-        html: '<h1>Teste funcionando</h1>',
+        subject: 'Teste Aclop (Remetente Padrão)',
+        html: '<h1>Teste funcionando com onboarding@resend.dev</h1>',
       }),
     })
 
@@ -57,12 +57,12 @@ Deno.serve(async () => {
         { status: res.status, headers: { 'Content-Type': 'application/json' } },
       )
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(error)
     return new Response(
       JSON.stringify({
         sucesso: false,
-        erro: error.message,
+        erro: error instanceof Error ? error.message : 'Erro desconhecido',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
