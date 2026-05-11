@@ -43,8 +43,7 @@ export default function Perfil() {
   const [limiteAlerta, setLimiteAlerta] = useState<number>(500)
   const [savingConfigs, setSavingConfigs] = useState(false)
 
-  // Customer Profile States (Mocked initially as requested)
-  const [formData, setFormData] = useState({
+  const mockInitialData = {
     nome: 'Anderson Leandro',
     email: 'andersonleandro28@gmail.com',
     telefone: '(11) 98765-4321',
@@ -56,7 +55,10 @@ export default function Perfil() {
     cep: '01234-567',
     cidade: 'São Paulo',
     estado: 'SP',
-  })
+  }
+
+  // Customer Profile States (Mocked initially as requested)
+  const [formData, setFormData] = useState({ ...mockInitialData })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [passwords, setPasswords] = useState({
@@ -148,24 +150,29 @@ export default function Perfil() {
     setPreviewUrl(null)
   }
 
-  const handleCustomerSave = () => {
-    if (!formData.nome || !formData.email || !formData.telefone) {
-      toast({
-        title: 'Erro de validação',
-        description: 'Por favor, preencha os campos obrigatórios (Nome, Email, Telefone).',
-        variant: 'destructive',
-      })
-      return
-    }
+  const isFormValid = !!(
+    formData.nome &&
+    formData.email &&
+    formData.telefone &&
+    formData.dataNascimento &&
+    formData.cep &&
+    formData.rua &&
+    formData.numero &&
+    formData.cidade &&
+    formData.estado
+  )
 
-    if (passwords.nova && passwords.nova !== passwords.confirmacao) {
-      toast({
-        title: 'Erro de validação',
-        description: 'A nova senha e a confirmação não coincidem.',
-        variant: 'destructive',
-      })
-      return
-    }
+  const isPasswordValid =
+    (!passwords.atual && !passwords.nova && !passwords.confirmacao) ||
+    (!!passwords.atual &&
+      !!passwords.nova &&
+      !!passwords.confirmacao &&
+      passwords.nova === passwords.confirmacao)
+
+  const canSave = isFormValid && isPasswordValid
+
+  const handleCustomerSave = () => {
+    if (!canSave) return
 
     setAvatarUrl(previewUrl)
     setPasswords({ atual: '', nova: '', confirmacao: '' })
@@ -176,25 +183,25 @@ export default function Perfil() {
   }
 
   const handleCustomerCancel = () => {
-    setFormData((prev) => ({
-      ...prev,
-      nome: detalhes?.nome || detalhes?.razao_social || 'Anderson Leandro',
-      email: perfil?.email || 'andersonleandro28@gmail.com',
-      telefone: '(11) 98765-4321',
-      cpf: detalhes?.cpf || detalhes?.cnpj || '123.456.789-00',
-      dataNascimento: detalhes?.data_nascimento || '1990-03-15',
-      rua: 'Rua das Flores',
-      numero: '123',
-      complemento: 'Apto 456',
-      cep: '01234-567',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    }))
+    setFormData({
+      ...mockInitialData,
+      nome: detalhes?.nome || detalhes?.razao_social || mockInitialData.nome,
+      email: perfil?.email || mockInitialData.email,
+      cpf: detalhes?.cpf || detalhes?.cnpj || mockInitialData.cpf,
+      dataNascimento: detalhes?.data_nascimento || mockInitialData.dataNascimento,
+    })
     setPreviewUrl(avatarUrl)
     setPasswords({ atual: '', nova: '', confirmacao: '' })
     toast({
-      description: 'Alterações canceladas.',
+      description: 'Alterações canceladas e dados restaurados.',
     })
+  }
+
+  const renderError = (fieldValue: string) => {
+    if (!fieldValue) {
+      return <span className="text-xs text-red-500 font-medium">Campo obrigatório</span>
+    }
+    return null
   }
 
   if (loading) {
@@ -351,7 +358,7 @@ export default function Perfil() {
           )}
         </div>
         <h2 className="mt-4 text-2xl font-bold text-slate-800 text-center leading-tight">
-          {formData.nome}
+          {formData.nome || 'Cliente'}
         </h2>
         <p className="text-slate-500 text-sm mt-1">{formData.email}</p>
       </div>
@@ -371,7 +378,9 @@ export default function Perfil() {
                 id="nome"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                placeholder="Seu nome completo"
               />
+              {renderError(formData.nome)}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">
@@ -382,7 +391,9 @@ export default function Perfil() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="seu@email.com"
               />
+              {renderError(formData.email)}
             </div>
             <div className="space-y-2">
               <Label htmlFor="telefone">
@@ -392,7 +403,9 @@ export default function Perfil() {
                 id="telefone"
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                placeholder="(00) 00000-0000"
               />
+              {renderError(formData.telefone)}
             </div>
             <div className="space-y-2">
               <Label htmlFor="cpf">CPF</Label>
@@ -400,17 +413,21 @@ export default function Perfil() {
                 id="cpf"
                 value={formData.cpf}
                 disabled
-                className="bg-slate-50 cursor-not-allowed"
+                readOnly
+                className="bg-slate-50 cursor-not-allowed opacity-70"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+              <Label htmlFor="dataNascimento">
+                Data de Nascimento <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="dataNascimento"
                 type="date"
                 value={formData.dataNascimento}
                 onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
               />
+              {renderError(formData.dataNascimento)}
             </div>
           </div>
 
@@ -418,28 +435,40 @@ export default function Perfil() {
             <h3 className="text-sm font-semibold text-slate-700 mb-4">Endereço</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cep">CEP</Label>
+                <Label htmlFor="cep">
+                  CEP <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="cep"
                   value={formData.cep}
                   onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                  placeholder="00000-000"
                 />
+                {renderError(formData.cep)}
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="rua">Rua</Label>
+                <Label htmlFor="rua">
+                  Rua <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="rua"
                   value={formData.rua}
                   onChange={(e) => setFormData({ ...formData, rua: e.target.value })}
+                  placeholder="Nome da rua"
                 />
+                {renderError(formData.rua)}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numero">Número</Label>
+                <Label htmlFor="numero">
+                  Número <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="numero"
                   value={formData.numero}
                   onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                  placeholder="Número"
                 />
+                {renderError(formData.numero)}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="complemento">Complemento</Label>
@@ -447,23 +476,32 @@ export default function Perfil() {
                   id="complemento"
                   value={formData.complemento}
                   onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                  placeholder="Apto, Sala, etc."
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade</Label>
+                <Label htmlFor="cidade">
+                  Cidade <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="cidade"
                   value={formData.cidade}
                   onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                  placeholder="Sua cidade"
                 />
+                {renderError(formData.cidade)}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="estado">Estado</Label>
+                <Label htmlFor="estado">
+                  Estado <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="estado"
                   value={formData.estado}
                   onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                  placeholder="Seu estado (Ex: SP)"
                 />
+                {renderError(formData.estado)}
               </div>
             </div>
           </div>
@@ -477,13 +515,18 @@ export default function Perfil() {
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+            <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0 flex justify-center items-center">
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[#1a4d2e]">
-                  <User className="w-8 h-8" />
-                </div>
+                <span className="text-xl font-bold text-[#1a4d2e]">
+                  {formData.nome
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase() || 'AL'}
+                </span>
               )}
             </div>
             <div className="flex-1 space-y-2">
@@ -497,7 +540,7 @@ export default function Perfil() {
               <Input
                 id="foto"
                 type="file"
-                accept="image/*"
+                accept="image/png, image/jpeg"
                 className="hidden"
                 onChange={handleImageChange}
               />
@@ -509,7 +552,7 @@ export default function Perfil() {
                   onClick={handleDeleteImage}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Remover
+                  Deletar foto
                 </Button>
               )}
               <p className="text-xs text-slate-500">Recomendado: JPG, PNG. Tamanho máximo 2MB.</p>
@@ -524,8 +567,14 @@ export default function Perfil() {
           <CardTitle className="text-lg">Segurança</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
+          <p className="text-sm text-slate-500">
+            Preencha apenas se desejar alterar sua senha atual.
+          </p>
           <div className="space-y-2">
-            <Label htmlFor="senhaAtual">Senha Atual</Label>
+            <Label htmlFor="senhaAtual">
+              Senha Atual{' '}
+              {(passwords.nova || passwords.confirmacao) && <span className="text-red-500">*</span>}
+            </Label>
             <Input
               id="senhaAtual"
               type="password"
@@ -535,7 +584,12 @@ export default function Perfil() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="novaSenha">Nova Senha</Label>
+              <Label htmlFor="novaSenha">
+                Nova Senha{' '}
+                {(passwords.atual || passwords.confirmacao) && (
+                  <span className="text-red-500">*</span>
+                )}
+              </Label>
               <Input
                 id="novaSenha"
                 type="password"
@@ -544,13 +598,21 @@ export default function Perfil() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmacaoSenha">Confirmar Nova Senha</Label>
+              <Label htmlFor="confirmacaoSenha">
+                Confirmar Nova Senha{' '}
+                {(passwords.atual || passwords.nova) && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="confirmacaoSenha"
                 type="password"
                 value={passwords.confirmacao}
                 onChange={(e) => setPasswords({ ...passwords, confirmacao: e.target.value })}
               />
+              {passwords.nova &&
+                passwords.confirmacao &&
+                passwords.nova !== passwords.confirmacao && (
+                  <span className="text-xs text-red-500 font-medium">As senhas não coincidem</span>
+                )}
             </div>
           </div>
         </CardContent>
@@ -558,12 +620,17 @@ export default function Perfil() {
 
       {/* Footer Botões */}
       <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 pb-8">
-        <Button variant="outline" className="w-full sm:w-auto" onClick={handleCustomerCancel}>
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 border-none"
+          onClick={handleCustomerCancel}
+        >
           Cancelar
         </Button>
         <Button
-          className="w-full sm:w-auto bg-[#7fff00] text-[#1a4d2e] hover:bg-[#6be600] font-bold"
+          className="w-full sm:w-auto bg-[#7fff00] text-[#1a4d2e] hover:bg-[#6be600] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleCustomerSave}
+          disabled={!canSave}
         >
           <Save className="w-4 h-4 mr-2" />
           Salvar Alterações
