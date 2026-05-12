@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 import {
   getPerfilUsuario,
+  updatePerfilUsuario,
   getSpreadUSDT,
   updateSpreadUSDT,
   getLimiteAlertaSaldo,
@@ -22,7 +24,6 @@ import {
   Package,
   LayoutDashboard,
   FileText,
-  User,
   Upload,
   Trash2,
   Save,
@@ -43,24 +44,25 @@ export default function Perfil() {
   const [limiteAlerta, setLimiteAlerta] = useState<number>(500)
   const [savingConfigs, setSavingConfigs] = useState(false)
 
-  const mockInitialData = {
-    nome: 'Anderson Leandro',
-    email: 'andersonleandro28@gmail.com',
-    telefone: '(11) 98765-4321',
-    cpf: '123.456.789-00',
-    dataNascimento: '1990-03-15',
-    rua: 'Rua das Flores',
-    numero: '123',
-    complemento: 'Apto 456',
-    cep: '01234-567',
-    cidade: 'São Paulo',
-    estado: 'SP',
-  }
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    cpf: '',
+    dataNascimento: '',
+    rua: '',
+    numero: '',
+    complemento: '',
+    cep: '',
+    cidade: '',
+    estado: '',
+    foto_url: '',
+  })
 
-  // Customer Profile States (Mocked initially as requested)
-  const [formData, setFormData] = useState({ ...mockInitialData })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null)
+
   const [passwords, setPasswords] = useState({
     atual: '',
     nova: '',
@@ -83,17 +85,26 @@ export default function Perfil() {
         const limite = await getLimiteAlertaSaldo()
         setLimiteAlerta(limite)
       } else {
-        // Update mock data with real data if available
-        setFormData((prev) => ({
-          ...prev,
-          nome: detalhes?.nome || detalhes?.razao_social || prev.nome,
-          email: usuario.email || prev.email,
-          cpf: detalhes?.cpf || detalhes?.cnpj || prev.cpf,
-          dataNascimento: detalhes?.data_nascimento || prev.dataNascimento,
-        }))
-        if (detalhes?.selfie_url || detalhes?.documentos_url) {
-          setAvatarUrl(detalhes.selfie_url || detalhes.documentos_url)
-          setPreviewUrl(detalhes.selfie_url || detalhes.documentos_url)
+        setFormData({
+          nome: detalhes?.nome || detalhes?.razao_social || '',
+          email: usuario.email || '',
+          telefone: (usuario as any).telefone || '',
+          cpf: detalhes?.cpf || detalhes?.cnpj || '',
+          dataNascimento: detalhes?.data_nascimento || '',
+          rua: (usuario as any).endereco_rua || '',
+          numero: (usuario as any).endereco_numero || '',
+          complemento: (usuario as any).endereco_complemento || '',
+          cep: (usuario as any).endereco_cep || '',
+          cidade: (usuario as any).endereco_cidade || '',
+          estado: (usuario as any).endereco_estado || '',
+          foto_url: (usuario as any).foto_url || '',
+        })
+        if ((usuario as any).foto_url) {
+          setAvatarUrl((usuario as any).foto_url)
+          setPreviewUrl((usuario as any).foto_url)
+        } else {
+          setAvatarUrl(null)
+          setPreviewUrl(null)
         }
       }
     } catch (err: any) {
@@ -143,11 +154,38 @@ export default function Perfil() {
         setPreviewUrl(event.target?.result as string)
       }
       reader.readAsDataURL(file)
+      setNewAvatarFile(file)
     }
   }
 
-  const handleDeleteImage = () => {
-    setPreviewUrl(null)
+  const handleDeleteImage = async () => {
+    if (!user) return
+    try {
+      if (formData.foto_url) {
+        const pathMatch = formData.foto_url.match(/avatars\/(.+)$/)
+        if (pathMatch) {
+          await supabase.storage.from('avatars').remove([pathMatch[1]])
+        }
+        await supabase
+          .from('usuarios')
+          .update({ foto_url: null } as any)
+          .eq('id', user.id)
+      }
+
+      setPreviewUrl(null)
+      setAvatarUrl(null)
+      setFormData((prev) => ({ ...prev, foto_url: '' }))
+      setNewAvatarFile(null)
+
+      window.dispatchEvent(new Event('profileUpdated'))
+      toast({ description: 'Foto removida com sucesso.' })
+    } catch (err: any) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível remover a foto.',
+        variant: 'destructive',
+      })
+    }
   }
 
   const isFormValid = !!(
@@ -169,28 +207,70 @@ export default function Perfil() {
       !!passwords.confirmacao &&
       passwords.nova === passwords.confirmacao)
 
-  const canSave = isFormValid && isPasswordValid
+  const canSave = isFormValid && isPasswordValid && !savingConfigs
 
-  const handleCustomerSave = () => {
-    if (!canSave) return
+  const handleCustomerSave = async () => {
+    if (!canSave || !user) return
 
-    setAvatarUrl(previewUrl)
-    setPasswords({ atual: '', nova: '', confirmacao: '' })
-    toast({
-      title: 'Sucesso',
-      description: 'Seus dados foram atualizados com sucesso.',
-    })
+    try {
+      setSavingConfigs(true)
+      let finalFotoUrl = formData.foto_url
+
+      if (newAvatarFile) {
+        const fileExt = newAvatarFile.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        const filePath = `usuarios/${user.id}/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, newAvatarFile, { upsert: true })
+
+        if (uploadError) throw uploadError
+
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+        finalFotoUrl = data.publicUrl
+      }
+
+      await updatePerfilUsuario(user.id, {
+        ...formData,
+        foto_url: finalFotoUrl,
+      })
+
+      if (passwords.atual && passwords.nova) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user.email!,
+          password: passwords.atual,
+        })
+        if (signInError) throw new Error('Senha atual incorreta.')
+
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: passwords.nova,
+        })
+        if (updateError) throw updateError
+      }
+
+      setFormData((prev) => ({ ...prev, foto_url: finalFotoUrl }))
+      setAvatarUrl(finalFotoUrl)
+      setPreviewUrl(finalFotoUrl)
+      setNewAvatarFile(null)
+      setPasswords({ atual: '', nova: '', confirmacao: '' })
+
+      window.dispatchEvent(new Event('profileUpdated'))
+      toast({ title: 'Sucesso', description: 'Perfil atualizado com sucesso.' })
+    } catch (err: any) {
+      toast({
+        title: 'Erro',
+        description: err.message || 'Erro ao salvar alterações.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSavingConfigs(false)
+    }
   }
 
   const handleCustomerCancel = () => {
-    setFormData({
-      ...mockInitialData,
-      nome: detalhes?.nome || detalhes?.razao_social || mockInitialData.nome,
-      email: perfil?.email || mockInitialData.email,
-      cpf: detalhes?.cpf || detalhes?.cnpj || mockInitialData.cpf,
-      dataNascimento: detalhes?.data_nascimento || mockInitialData.dataNascimento,
-    })
-    setPreviewUrl(avatarUrl)
+    loadData()
+    setNewAvatarFile(null)
     setPasswords({ atual: '', nova: '', confirmacao: '' })
     toast({
       description: 'Alterações canceladas e dados restaurados.',
@@ -341,7 +421,6 @@ export default function Perfil() {
 
   const renderCustomerView = () => (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col items-center justify-center mb-8 pt-4">
         <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-4 border-[#1a4d2e] bg-slate-100 flex items-center justify-center shadow-md">
           {previewUrl ? (
@@ -349,11 +428,13 @@ export default function Perfil() {
           ) : (
             <span className="text-4xl font-bold text-[#1a4d2e]">
               {formData.nome
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .substring(0, 2)
-                .toUpperCase()}
+                ? formData.nome
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase()
+                : 'AL'}
             </span>
           )}
         </div>
@@ -363,7 +444,6 @@ export default function Perfil() {
         <p className="text-slate-500 text-sm mt-1">{formData.email}</p>
       </div>
 
-      {/* Seção 1: Dados Pessoais */}
       <Card className="border-slate-200 shadow-sm overflow-hidden">
         <CardHeader className="bg-[#1a4d2e] text-white p-4">
           <CardTitle className="text-lg">Dados Pessoais</CardTitle>
@@ -408,7 +488,7 @@ export default function Perfil() {
               {renderError(formData.telefone)}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cpf">CPF</Label>
+              <Label htmlFor="cpf">CPF/CNPJ</Label>
               <Input
                 id="cpf"
                 value={formData.cpf}
@@ -508,7 +588,6 @@ export default function Perfil() {
         </CardContent>
       </Card>
 
-      {/* Seção 2: Foto de Perfil */}
       <Card className="border-slate-200 shadow-sm overflow-hidden">
         <CardHeader className="bg-[#1a4d2e] text-white p-4">
           <CardTitle className="text-lg">Foto de Perfil</CardTitle>
@@ -521,11 +600,13 @@ export default function Perfil() {
               ) : (
                 <span className="text-xl font-bold text-[#1a4d2e]">
                   {formData.nome
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase() || 'AL'}
+                    ? formData.nome
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase()
+                    : 'AL'}
                 </span>
               )}
             </div>
@@ -561,7 +642,6 @@ export default function Perfil() {
         </CardContent>
       </Card>
 
-      {/* Seção 3: Segurança */}
       <Card className="border-slate-200 shadow-sm overflow-hidden">
         <CardHeader className="bg-[#1a4d2e] text-white p-4">
           <CardTitle className="text-lg">Segurança</CardTitle>
@@ -618,7 +698,6 @@ export default function Perfil() {
         </CardContent>
       </Card>
 
-      {/* Footer Botões */}
       <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 pb-8">
         <Button
           variant="outline"
@@ -632,12 +711,16 @@ export default function Perfil() {
           onClick={handleCustomerSave}
           disabled={!canSave}
         >
-          <Save className="w-4 h-4 mr-2" />
-          Salvar Alterações
+          {savingConfigs ? (
+            'Salvando...'
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" /> Salvar Alterações
+            </>
+          )}
         </Button>
       </div>
 
-      {/* Signout separately */}
       <div className="pt-2 border-t border-slate-100">
         <Button
           variant="ghost"

@@ -66,23 +66,48 @@ export default function Layout() {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userData, setUserData] = useState<{ nome: string; foto_url: string | null } | null>(null)
+
+  const loadUserData = async () => {
+    if (!user) return
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('role, tipo, foto_url' as any)
+      .eq('id', user.id)
+      .single()
+
+    let nome = user.user_metadata?.name || user.email?.split('@')[0] || 'Cliente'
+    if (usuario) {
+      setIsAdmin(usuario.role === 'admin')
+      if (usuario.tipo === 'PF') {
+        const { data: pf } = await supabase
+          .from('usuarios_pf')
+          .select('nome')
+          .eq('user_id', user.id)
+          .single()
+        if (pf?.nome) nome = pf.nome
+      } else {
+        const { data: pj } = await supabase
+          .from('usuarios_pj')
+          .select('razao_social')
+          .eq('user_id', user.id)
+          .single()
+        if (pj?.razao_social) nome = pj.razao_social
+      }
+      setUserData({ nome, foto_url: (usuario as any).foto_url || null })
+    }
+  }
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from('usuarios')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          setIsAdmin(data?.role === 'admin')
-        })
-    }
+    loadUserData()
+    const handleProfileUpdate = () => loadUserData()
+    window.addEventListener('profileUpdated', handleProfileUpdate)
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate)
   }, [user])
 
   const menuItems = isAdmin ? adminMenuItems : baseMenuItems
 
-  const fullName = user?.user_metadata?.name || 'Anderson Leandro'
+  const fullName = userData?.nome || user?.user_metadata?.name || 'Anderson Leandro'
   const userFirstName = fullName.split(' ')[0] || user?.email?.split('@')[0] || 'Anderson'
   const initials = fullName
     .split(' ')
@@ -90,6 +115,8 @@ export default function Layout() {
     .slice(0, 2)
     .join('')
     .toUpperCase()
+
+  const avatarSrc = userData?.foto_url || undefined
 
   const handleLogout = async () => {
     await signOut()
@@ -179,8 +206,8 @@ export default function Layout() {
                       </span>
                       <span className="text-xs text-muted-foreground mt-1">Conta Corrente</span>
                     </div>
-                    <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-[#7fff00] transition-colors">
-                      <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=1" />
+                    <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-[#7fff00] transition-colors bg-[#1a4d2e]">
+                      <AvatarImage src={avatarSrc} className="object-cover" />
                       <AvatarFallback className="bg-[#1a4d2e] text-[#7fff00] font-semibold">
                         {initials}
                       </AvatarFallback>

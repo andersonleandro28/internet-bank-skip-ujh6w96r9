@@ -30,6 +30,47 @@ export const getPerfilUsuario = async (userId: string) => {
   return { usuario, detalhes }
 }
 
+export const updatePerfilUsuario = async (userId: string, data: any) => {
+  const { error: userError } = await supabase
+    .from('usuarios')
+    .update({
+      telefone: data.telefone,
+      endereco_rua: data.rua,
+      endereco_numero: data.numero,
+      endereco_complemento: data.complemento,
+      endereco_cep: data.cep,
+      endereco_cidade: data.cidade,
+      endereco_estado: data.estado,
+      foto_url: data.foto_url,
+    } as any)
+    .eq('id', userId)
+
+  if (userError) throw userError
+
+  const { data: userType } = await supabase
+    .from('usuarios')
+    .select('tipo')
+    .eq('id', userId)
+    .single()
+
+  if (userType?.tipo === 'PF') {
+    await supabase
+      .from('usuarios_pf')
+      .update({
+        nome: data.nome,
+        data_nascimento: data.dataNascimento || null,
+      })
+      .eq('user_id', userId)
+  } else if (userType?.tipo === 'PJ') {
+    await supabase
+      .from('usuarios_pj')
+      .update({
+        razao_social: data.nome,
+      })
+      .eq('user_id', userId)
+  }
+}
+
 export const getHistoricoLogins = async (userId: string) => {
   const { data, error } = await supabase
     .from('historico_logins' as any)
