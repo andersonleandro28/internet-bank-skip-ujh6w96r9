@@ -164,14 +164,42 @@ export default function Clientes() {
   const handleResetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email)
-      if (error) throw error
+      if (error) {
+        if (
+          error.status === 429 ||
+          error.message?.includes('rate limit') ||
+          error.code === 'over_email_send_rate_limit'
+        ) {
+          toast({
+            title: 'Limite excedido',
+            description:
+              'Muitos e-mails de recuperação enviados. Aguarde alguns instantes antes de tentar novamente.',
+            variant: 'destructive',
+          })
+          return
+        }
+        throw error
+      }
       toast({ title: 'Sucesso', description: 'E-mail de redefinição de senha enviado.' })
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Falha ao enviar e-mail de redefinição.',
-        variant: 'destructive',
-      })
+    } catch (error: any) {
+      if (
+        error?.status === 429 ||
+        error?.message?.includes('rate limit') ||
+        error?.code === 'over_email_send_rate_limit'
+      ) {
+        toast({
+          title: 'Limite excedido',
+          description:
+            'Muitos e-mails de recuperação enviados. Aguarde alguns instantes antes de tentar novamente.',
+          variant: 'destructive',
+        })
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Falha ao enviar e-mail de redefinição.',
+          variant: 'destructive',
+        })
+      }
     }
   }
 

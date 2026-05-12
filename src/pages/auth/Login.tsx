@@ -54,19 +54,44 @@ export default function Login() {
     e.preventDefault()
     setResetLoading(true)
     setErrorMsg('')
-    const { error } = await resetPasswordForEmail(resetEmail)
-    setResetLoading(false)
+    try {
+      const { error } = await resetPasswordForEmail(resetEmail)
+      setResetLoading(false)
 
-    if (error) {
-      setErrorMsg('Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.')
-    } else {
-      toast({
-        title: 'Email enviado',
-        description:
-          'Se o email existir em nossa base, você receberá um link para redefinir sua senha.',
-      })
-      setIsForgotPassword(false)
-      setResetEmail('')
+      if (error) {
+        if (
+          error.status === 429 ||
+          error.message?.includes('rate limit') ||
+          (error as any).code === 'over_email_send_rate_limit'
+        ) {
+          setErrorMsg(
+            'Muitos e-mails enviados. Aguarde alguns instantes antes de tentar novamente.',
+          )
+        } else {
+          setErrorMsg(
+            'Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.',
+          )
+        }
+      } else {
+        toast({
+          title: 'Email enviado',
+          description:
+            'Se o email existir em nossa base, você receberá um link para redefinir sua senha.',
+        })
+        setIsForgotPassword(false)
+        setResetEmail('')
+      }
+    } catch (error: any) {
+      setResetLoading(false)
+      if (
+        error?.status === 429 ||
+        error?.message?.includes('rate limit') ||
+        error?.code === 'over_email_send_rate_limit'
+      ) {
+        setErrorMsg('Muitos e-mails enviados. Aguarde alguns instantes antes de tentar novamente.')
+      } else {
+        setErrorMsg('Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.')
+      }
     }
   }
 
