@@ -13,6 +13,7 @@ import Carregar from './pages/Carregar'
 import Perfil from './pages/Perfil'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ResetPassword from './pages/auth/ResetPassword'
 import NotFound from './pages/NotFound'
 import ConfiguracoesTaxas from './pages/admin/ConfiguracoesTaxas'
 import GerenciarCestas from './pages/admin/GerenciarCestas'
@@ -40,6 +41,7 @@ const App = () => (
             {/* Auth Routes without main Layout */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-senha" element={<ResetPassword />} />
 
             {/* Main App Routes */}
             <Route
