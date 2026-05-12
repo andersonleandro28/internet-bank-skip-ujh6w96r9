@@ -74,7 +74,7 @@ export default function Layout() {
       .from('usuarios')
       .select('role, tipo, foto_url' as any)
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     let nome = user.user_metadata?.name || user.email?.split('@')[0] || 'Cliente'
     if (usuario) {
@@ -84,14 +84,14 @@ export default function Layout() {
           .from('usuarios_pf')
           .select('nome')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
         if (pf?.nome) nome = pf.nome
       } else {
         const { data: pj } = await supabase
           .from('usuarios_pj')
           .select('razao_social')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
         if (pj?.razao_social) nome = pj.razao_social
       }
       setUserData({ nome, foto_url: (usuario as any).foto_url || null })

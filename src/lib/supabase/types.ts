@@ -1,17 +1,11 @@
 // AVOID UPDATING THIS FILE DIRECTLY. It is automatically generated.
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -45,11 +39,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "auditoria_admin_id_fkey"
-            columns: ["admin_id"]
+            foreignKeyName: 'auditoria_admin_id_fkey'
+            columns: ['admin_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -77,11 +71,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cestas_clientes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'cestas_clientes_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -112,18 +106,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cestas_itens_cesta_id_fkey"
-            columns: ["cesta_id"]
+            foreignKeyName: 'cestas_itens_cesta_id_fkey'
+            columns: ['cesta_id']
             isOneToOne: false
-            referencedRelation: "cestas_clientes"
-            referencedColumns: ["id"]
+            referencedRelation: 'cestas_clientes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "cestas_itens_servico_id_fkey"
-            columns: ["servico_id"]
+            foreignKeyName: 'cestas_itens_servico_id_fkey'
+            columns: ['servico_id']
             isOneToOne: false
-            referencedRelation: "servicos"
-            referencedColumns: ["id"]
+            referencedRelation: 'servicos'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -148,11 +142,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "contas_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'contas_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: true
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -186,18 +180,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "depositos_admin_id_fkey"
-            columns: ["admin_id"]
+            foreignKeyName: 'depositos_admin_id_fkey'
+            columns: ['admin_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "depositos_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'depositos_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -234,11 +228,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "emails_log_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'emails_log_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -287,11 +281,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "emails_pendentes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'emails_pendentes_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -331,11 +325,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "favorecidos_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'favorecidos_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -363,11 +357,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "historico_logins_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'historico_logins_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -401,11 +395,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notificacoes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'notificacoes_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -457,18 +451,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "requisicoes_processed_by_fkey"
-            columns: ["processed_by"]
+            foreignKeyName: 'requisicoes_processed_by_fkey'
+            columns: ['processed_by']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "requisicoes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'requisicoes_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -517,11 +511,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "taxas_servicos_servico_id_fkey"
-            columns: ["servico_id"]
+            foreignKeyName: 'taxas_servicos_servico_id_fkey'
+            columns: ['servico_id']
             isOneToOne: false
-            referencedRelation: "servicos"
-            referencedColumns: ["id"]
+            referencedRelation: 'servicos'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -538,10 +532,10 @@ export type Database = {
           foto_url: string | null
           id: string
           limite_alerta_saldo: number
-          role: Database["public"]["Enums"]["role_usuario"]
-          status: Database["public"]["Enums"]["status_usuario"]
+          role: Database['public']['Enums']['role_usuario']
+          status: Database['public']['Enums']['status_usuario']
           telefone: string | null
-          tipo: Database["public"]["Enums"]["tipo_usuario"]
+          tipo: Database['public']['Enums']['tipo_usuario']
           ultimo_alerta_saldo: string | null
           updated_at: string
         }
@@ -557,10 +551,10 @@ export type Database = {
           foto_url?: string | null
           id: string
           limite_alerta_saldo?: number
-          role?: Database["public"]["Enums"]["role_usuario"]
-          status?: Database["public"]["Enums"]["status_usuario"]
+          role?: Database['public']['Enums']['role_usuario']
+          status?: Database['public']['Enums']['status_usuario']
           telefone?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_usuario"]
+          tipo?: Database['public']['Enums']['tipo_usuario']
           ultimo_alerta_saldo?: string | null
           updated_at?: string
         }
@@ -576,10 +570,10 @@ export type Database = {
           foto_url?: string | null
           id?: string
           limite_alerta_saldo?: number
-          role?: Database["public"]["Enums"]["role_usuario"]
-          status?: Database["public"]["Enums"]["status_usuario"]
+          role?: Database['public']['Enums']['role_usuario']
+          status?: Database['public']['Enums']['status_usuario']
           telefone?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_usuario"]
+          tipo?: Database['public']['Enums']['tipo_usuario']
           ultimo_alerta_saldo?: string | null
           updated_at?: string
         }
@@ -615,11 +609,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "usuarios_pf_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'usuarios_pf_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -662,11 +656,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "usuarios_pj_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'usuarios_pj_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -702,9 +696,9 @@ export type Database = {
       }
     }
     Enums: {
-      role_usuario: "cliente" | "admin"
-      status_usuario: "pendente" | "aprovado" | "reprovado"
-      tipo_usuario: "PF" | "PJ"
+      role_usuario: 'cliente' | 'admin'
+      status_usuario: 'pendente' | 'aprovado' | 'reprovado'
+      tipo_usuario: 'PF' | 'PJ'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -712,33 +706,31 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -747,23 +739,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -772,23 +764,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -797,48 +789,47 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
     Enums: {
-      role_usuario: ["cliente", "admin"],
-      status_usuario: ["pendente", "aprovado", "reprovado"],
-      tipo_usuario: ["PF", "PJ"],
+      role_usuario: ['cliente', 'admin'],
+      status_usuario: ['pendente', 'aprovado', 'reprovado'],
+      tipo_usuario: ['PF', 'PJ'],
     },
   },
 } as const
-
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -1168,17 +1159,17 @@ export const Constants = {
 //     IF NOT public.is_admin() THEN
 //       RAISE EXCEPTION 'Acesso negado';
 //     END IF;
-//   
+//
 //     UPDATE auth.users
 //     SET email = p_email
 //     WHERE id = p_user_id;
-//   
+//
 //     UPDATE public.usuarios
 //     SET email = p_email
 //     WHERE id = p_user_id;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION aprovar_requisicao(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.aprovar_requisicao(req_id uuid, p_admin_id uuid)
 //    RETURNS void
@@ -1186,16 +1177,16 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   BEGIN
-//     UPDATE public.requisicoes 
+//     UPDATE public.requisicoes
 //     SET status = 'aprovado', processed_by = p_admin_id, processed_at = NOW()
 //     WHERE id = req_id;
-//   
+//
 //     -- Insert auditoria
 //     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
 //     VALUES (p_admin_id, 'aprovou_requisicao', 'requisicoes', req_id);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION aprovar_usuario(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.aprovar_usuario(p_user_id uuid, p_admin_id uuid)
 //    RETURNS void
@@ -1207,20 +1198,20 @@ export const Constants = {
 //   BEGIN
 //     -- Update usuario
 //     UPDATE public.usuarios SET status = 'aprovado' WHERE id = p_user_id;
-//   
+//
 //     -- Create default cesta if not exists
 //     IF NOT EXISTS (SELECT 1 FROM public.cestas_clientes WHERE user_id = p_user_id AND nome = 'Cesta Padrão') THEN
 //       INSERT INTO public.cestas_clientes (user_id, nome, ativo)
 //       VALUES (p_user_id, 'Cesta Padrão', true)
 //       RETURNING id INTO v_cesta_id;
 //     END IF;
-//   
+//
 //     -- Insert auditoria
 //     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
 //     VALUES (p_admin_id, 'aprovou_usuario', 'usuarios', p_user_id);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION handle_new_user()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user()
 //    RETURNS trigger
@@ -1235,28 +1226,28 @@ export const Constants = {
 //     IF v_limite IS NULL THEN
 //       v_limite := 500;
 //     END IF;
-//   
+//
 //     INSERT INTO public.usuarios (id, email, role, status, tipo, limite_alerta_saldo)
 //     VALUES (
-//       NEW.id, 
-//       NEW.email, 
-//       'cliente', 
-//       'pendente', 
+//       NEW.id,
+//       NEW.email,
+//       'cliente',
+//       'pendente',
 //       COALESCE((NEW.raw_user_meta_data->>'tipo'), 'PF')::public.tipo_usuario,
 //       v_limite
 //     )
-//     ON CONFLICT (id) DO UPDATE SET 
+//     ON CONFLICT (id) DO UPDATE SET
 //       status = 'pendente',
 //       tipo = EXCLUDED.tipo;
-//     
+//
 //     INSERT INTO public.contas (user_id, saldo, saldo_bloqueado)
 //     VALUES (NEW.id, 0, 0)
 //     ON CONFLICT (user_id) DO NOTHING;
-//     
+//
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION is_admin()
 //   CREATE OR REPLACE FUNCTION public.is_admin()
 //    RETURNS boolean
@@ -1271,7 +1262,7 @@ export const Constants = {
 //     );
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_admin_new_requisicao()
 //   CREATE OR REPLACE FUNCTION public.notify_admin_new_requisicao()
 //    RETURNS trigger
@@ -1287,15 +1278,15 @@ export const Constants = {
 //     LEFT JOIN public.usuarios_pj pj ON u.id = pj.user_id
 //     WHERE u.id = NEW.user_id
 //     LIMIT 1;
-//   
+//
 //     INSERT INTO public.notificacoes (user_id, tipo, mensagem, link)
 //     SELECT id, 'aviso', 'Nova requisição de ' || v_nome || ' aguardando análise', '/admin/painel'
 //     FROM public.usuarios WHERE role = 'admin';
-//   
+//
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_admin_new_usuario_pf()
 //   CREATE OR REPLACE FUNCTION public.notify_admin_new_usuario_pf()
 //    RETURNS trigger
@@ -1309,7 +1300,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_admin_new_usuario_pj()
 //   CREATE OR REPLACE FUNCTION public.notify_admin_new_usuario_pj()
 //    RETURNS trigger
@@ -1323,7 +1314,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_depositos()
 //   CREATE OR REPLACE FUNCTION public.notify_depositos()
 //    RETURNS trigger
@@ -1338,7 +1329,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_requisicoes_update()
 //   CREATE OR REPLACE FUNCTION public.notify_requisicoes_update()
 //    RETURNS trigger
@@ -1356,7 +1347,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_usuarios_update()
 //   CREATE OR REPLACE FUNCTION public.notify_usuarios_update()
 //    RETURNS trigger
@@ -1374,7 +1365,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION realizar_deposito(uuid, numeric, uuid)
 //   CREATE OR REPLACE FUNCTION public.realizar_deposito(p_cliente_id uuid, p_valor numeric, p_admin_id uuid)
 //    RETURNS void
@@ -1388,23 +1379,23 @@ export const Constants = {
 //     IF NOT EXISTS (SELECT 1 FROM public.usuarios WHERE id = auth.uid() AND role = 'admin') THEN
 //       RAISE EXCEPTION 'Acesso negado';
 //     END IF;
-//   
+//
 //     -- Update account balance
 //     UPDATE public.contas
 //     SET saldo = saldo + p_valor
 //     WHERE user_id = p_cliente_id;
-//   
+//
 //     -- Insert deposit record
 //     INSERT INTO public.depositos (admin_id, user_id, valor, status, confirmed_at)
 //     VALUES (p_admin_id, p_cliente_id, p_valor, 'confirmado', NOW())
 //     RETURNING id INTO v_deposito_id;
-//   
+//
 //     -- Insert audit log
 //     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
 //     VALUES (p_admin_id, 'depositou_saldo', 'depositos', v_deposito_id);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION reprovar_requisicao(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.reprovar_requisicao(req_id uuid, p_admin_id uuid)
 //    RETURNS void
@@ -1416,27 +1407,27 @@ export const Constants = {
 //   BEGIN
 //     -- get the request
 //     SELECT * INTO v_req FROM public.requisicoes WHERE id = req_id;
-//     
+//
 //     IF v_req.status != 'pendente' THEN
 //       RAISE EXCEPTION 'Requisição não está pendente';
 //     END IF;
-//   
+//
 //     -- update requisicao
-//     UPDATE public.requisicoes 
+//     UPDATE public.requisicoes
 //     SET status = 'reprovado', processed_by = p_admin_id, processed_at = NOW()
 //     WHERE id = req_id;
-//   
+//
 //     -- return balance to the user
 //     UPDATE public.contas
 //     SET saldo = saldo + v_req.valor_total
 //     WHERE user_id = v_req.user_id;
-//   
+//
 //     -- insert auditoria
 //     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
 //     VALUES (p_admin_id, 'reprovou_requisicao', 'requisicoes', req_id);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION reprovar_usuario(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.reprovar_usuario(p_user_id uuid, p_admin_id uuid)
 //    RETURNS void
@@ -1446,13 +1437,13 @@ export const Constants = {
 //   BEGIN
 //     -- Update usuario
 //     UPDATE public.usuarios SET status = 'reprovado' WHERE id = p_user_id;
-//   
+//
 //     -- Insert auditoria
 //     INSERT INTO public.auditoria (admin_id, acao, tabela, registro_id)
 //     VALUES (p_admin_id, 'reprovou_usuario', 'usuarios', p_user_id);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION trigger_enviar_email_confirmacao_cadastro()
 //   CREATE OR REPLACE FUNCTION public.trigger_enviar_email_confirmacao_cadastro()
 //    RETURNS trigger
@@ -1478,7 +1469,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION trigger_notify_alerta_saldo()
 //   CREATE OR REPLACE FUNCTION public.trigger_notify_alerta_saldo()
 //    RETURNS trigger
@@ -1494,7 +1485,7 @@ export const Constants = {
 //     IF TG_OP = 'UPDATE' AND NEW.saldo < OLD.saldo THEN
 //       SELECT limite_alerta_saldo, ultimo_alerta_saldo INTO v_limite, v_ultimo
 //       FROM public.usuarios WHERE id = NEW.user_id;
-//   
+//
 //       IF NEW.saldo < v_limite AND (v_ultimo IS NULL OR v_ultimo < NOW() - INTERVAL '1 day') THEN
 //         payload := jsonb_build_object(
 //           'type', 'UPDATE',
@@ -1513,7 +1504,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION trigger_notify_deposito()
 //   CREATE OR REPLACE FUNCTION public.trigger_notify_deposito()
 //    RETURNS trigger
@@ -1524,7 +1515,7 @@ export const Constants = {
 //     edge_function_url text := 'https://hwqaevtrzwfqeldprbsy.supabase.co/functions/v1/enviar_email_deposito_creditado';
 //     payload jsonb;
 //   BEGIN
-//     IF (TG_OP = 'INSERT' AND NEW.status = 'confirmado') OR 
+//     IF (TG_OP = 'INSERT' AND NEW.status = 'confirmado') OR
 //        (TG_OP = 'UPDATE' AND OLD.status != NEW.status AND NEW.status = 'confirmado') THEN
 //       payload := jsonb_build_object(
 //         'type', TG_OP,
@@ -1541,7 +1532,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION trigger_notify_requisicao()
 //   CREATE OR REPLACE FUNCTION public.trigger_notify_requisicao()
 //    RETURNS trigger
@@ -1568,7 +1559,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 
 // --- TRIGGERS ---
 // Table: contas
@@ -1599,4 +1590,3 @@ export const Constants = {
 //   CREATE UNIQUE INDEX usuarios_pf_cpf_key ON public.usuarios_pf USING btree (cpf)
 // Table: usuarios_pj
 //   CREATE UNIQUE INDEX usuarios_pj_cnpj_key ON public.usuarios_pj USING btree (cnpj)
-
