@@ -13,20 +13,36 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { token, password } = await req.json()
+    const authHeader = req.headers.get('Authorization')
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-    if (!token || !password) {
-      return new Response(JSON.stringify({ error: 'Token e senha são obrigatórios' }), {
+    // Cliente Supabase com token
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader || '' } },
+    })
+
+    // Cliente Admin para dar bypass no RLS e atualizar a senha do usuario
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    const requestData = await req.json().catch(() => ({}))
+    const token = requestData.token
+    const nova_senha = requestData.nova_senha || requestData.password
+
+    if (!token || !nova_senha) {
+      return new Response(JSON.stringify({ error: 'Campos obrigatórios' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-    // Cliente Admin para dar bypass no RLS e conseguir atualizar a senha do usuario
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    if (typeof nova_senha !== 'string' || nova_senha.length < 8) {
+      return new Response(JSON.stringify({ error: 'Senha deve ter mínimo 8 caracteres' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('password_reset_tokens')
@@ -41,15 +57,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    if (tokenData.used_at) {
-      return new Response(JSON.stringify({ error: 'Este link já foi utilizado' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    if (new Date(tokenData.expires_at) < new Date()) {
-      return new Response(JSON.stringify({ error: 'O link de recuperação expirou' }), {
+    if (tokenData.used_at || new Date(tokenData.expires_at) < new Date()) {
+      return new Response(JSON.stringify({ error: 'Link inválido ou expirado' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -57,21 +66,29 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       tokenData.user_id,
-      { password }
+      { password: nova_senha },
     )
 
     if (updateError) {
       console.error('Erro ao atualizar senha no auth.users:', updateError)
-      return new Response(JSON.stringify({ error: 'Erro ao redefinir a senha' }), {
+      return new Response(JSON.stringify({ error: 'Erro ao atualizar senha' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    await supabaseAdmin
+    const { error: markError } = await supabaseAdmin
       .from('password_reset_tokens')
       .update({ used_at: new Date().toISOString() })
-      .eq('id', tokenData.id)
+      .eq('token', token)
+
+    if (markError) {
+      console.error('Erro ao marcar token como usado:', markError)
+      return new Response(JSON.stringify({ error: 'Erro ao processar requisição' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     return new Response(JSON.stringify({ data: { message: 'Senha redefinida com sucesso' } }), {
       status: 200,
@@ -79,7 +96,7 @@ Deno.serve(async (req: Request) => {
     })
   } catch (error: any) {
     console.error('Erro interno:', error)
-    return new Response(JSON.stringify({ error: 'Erro interno no servidor' }), {
+    return new Response(JSON.stringify({ error: 'Erro ao processar requisição' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
