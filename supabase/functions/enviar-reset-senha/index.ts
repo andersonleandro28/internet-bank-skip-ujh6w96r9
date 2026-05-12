@@ -21,7 +21,7 @@ Deno.serve(async (req: Request) => {
 
     // Cliente Supabase com token
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader || '' } },
+      global: { headers: { Authorization: authHeader || '' } }
     })
 
     // Cliente Admin para bypass RLS na busca de usuários
@@ -53,12 +53,14 @@ Deno.serve(async (req: Request) => {
     const token = crypto.randomUUID().replace(/-/g, '')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
-    const { error: insertError } = await supabaseAdmin.from('password_reset_tokens').insert({
-      token,
-      email,
-      expires_at: expiresAt,
-      user_id: usuario.id,
-    })
+    const { error: insertError } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .insert({
+        token,
+        email,
+        expires_at: expiresAt,
+        user_id: usuario.id
+      })
 
     if (insertError) {
       console.error('Erro ao inserir token:', insertError)
@@ -79,14 +81,14 @@ Deno.serve(async (req: Request) => {
 
       while (attempt < 3 && !success) {
         if (attempt > 0) {
-          await new Promise((resolve) => setTimeout(resolve, delays[attempt - 1]))
+          await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]))
         }
 
         try {
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${RESEND_API_KEY}`,
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -124,6 +126,7 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+
   } catch (error: any) {
     console.error('Erro não tratado:', error)
     return new Response(JSON.stringify({ error: 'Erro ao processar requisição' }), {
