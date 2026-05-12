@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/use-auth'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Card,
   CardContent,
@@ -15,129 +14,118 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 import { supabase } from '@/lib/supabase/client'
+import { Loader2, XCircle } from 'lucide-react'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
-  const { updatePassword } = useAuth()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token')
+
   const { toast } = useToast()
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [checkingSession, setCheckingSession] = useState(true)
-  const [hasValidSession, setHasValidSession] = useState(false)
+
+  const [isValidating, setIsValidating] = useState(true)
+  const [isValidToken, setIsValidToken] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    // When landing on this page via the email link, Supabase sets the session via the URL hash
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (session) {
-        setHasValidSession(true)
-      } else {
-        // Look for hash access_token if getSession hasn't processed it yet
-        const hash = window.location.hash
-        if (hash && hash.includes('access_token')) {
-          setHasValidSession(true)
-        } else {
-          toast({
-            title: 'Link inválido ou expirado',
-            description: 'Por favor, solicite uma nova redefinição de senha.',
-            variant: 'destructive',
-          })
-          setTimeout(() => navigate('/login'), 3000)
-        }
+    async function validateToken() {
+      if (!token) {
+        setIsValidToken(false)
+        setIsValidating(false)
+        return
       }
-      setCheckingSession(false)
+
+      try {
+        const { data, error } = await supabase
+          .from('password_reset_tokens')
+          .select('id')
+          .eq('token', token)
+          .single()
+
+        if (error || !data) {
+          setIsValidToken(false)
+        } else {
+          setIsValidToken(true)
+        }
+      } catch (err) {
+        setIsValidToken(false)
+      } finally {
+        setIsValidating(false)
+      }
     }
 
-    checkSession()
+    validateToken()
+  }, [token])
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) {
-        setHasValidSession(true)
-        setCheckingSession(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [navigate, toast])
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast({ title: 'Erro', description: 'As senhas não coincidem.', variant: 'destructive' })
+      toast({ title: 'Erro', description: 'Senhas nao conferem', variant: 'destructive' })
       return
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: 'Erro',
-        description: 'A senha deve ter pelo menos 6 caracteres.',
+        description: 'Senha deve ter minimo 8 caracteres',
         variant: 'destructive',
       })
       return
     }
 
-    setLoading(true)
-    const { error } = await updatePassword(password)
-    setLoading(false)
+    setIsSubmitting(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('redefinir-senha', {
+        body: { token, password },
+      })
 
-    if (error) {
+      if (error) throw error
+
+      if (data?.error) {
+        throw new Error(data.error)
+      }
+
+      toast({ title: 'Sucesso', description: 'Senha redefinida com sucesso' })
+      setTimeout(() => navigate('/login'), 2000)
+    } catch (err: any) {
       toast({
         title: 'Erro',
-        description: error.message || 'Erro ao atualizar senha.',
+        description: err.message || 'Erro ao redefinir a senha.',
         variant: 'destructive',
       })
-    } else {
-      toast({ title: 'Sucesso', description: 'Sua senha foi atualizada com sucesso!' })
-      await supabase.auth.signOut()
-      navigate('/login')
+      setIsSubmitting(false)
     }
   }
 
-  if (checkingSession) {
+  if (isValidating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-600">Verificando link seguro...</p>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <Loader2 className="h-10 w-10 text-[#1a4d2e] animate-spin mb-4" />
+        <p className="text-slate-600 font-medium">Validando link de segurança...</p>
       </div>
     )
   }
 
-  if (!hasValidSession) {
+  if (!isValidToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="w-full max-w-md text-center p-6 border-none shadow-elevation">
-          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+        <Card className="w-full max-w-md text-center p-8 border-none shadow-elevation bg-white animate-fade-in-up">
+          <div className="mx-auto w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+            <XCircle className="h-10 w-10" />
           </div>
-          <h2 className="text-xl font-bold mb-2">Link Inválido</h2>
-          <p className="text-slate-600 mb-6">
-            O link de redefinição de senha é inválido ou expirou.
+          <h2 className="text-2xl font-bold text-[#1a4d2e] mb-3">Link Inválido ou Expirado</h2>
+          <p className="text-slate-600 mb-8">
+            O link que você está tentando usar não é mais válido, expirou ou já foi utilizado.
           </p>
-          <Button onClick={() => navigate('/login')} className="w-full">
-            Voltar para o Login
+          <Button
+            onClick={() => navigate('/login')}
+            className="w-full h-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+          >
+            Voltar ao login
           </Button>
         </Card>
       </div>
@@ -146,25 +134,23 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="w-full max-w-md animate-fade-in-up">
+      <div className="w-full max-w-md animate-fade-in-up z-10">
         <div className="flex justify-center mb-8">
-          <div className="p-5 flex items-center gap-3">
-            <img src={logoAclop} alt="ACLOP Logo" className="h-14 object-contain" />
-            <span className="text-slate-900 font-bold text-3xl tracking-wider">ACLOP</span>
+          <div className="flex items-center gap-3">
+            <img src={logoAclop} alt="ACLOP Logo" className="h-16 object-contain drop-shadow-sm" />
           </div>
         </div>
 
-        <Card className="border-none shadow-elevation">
+        <Card className="border-none shadow-elevation bg-white">
           <CardHeader className="space-y-1 text-center pb-6">
-            <CardTitle className="text-2xl font-bold tracking-tight">Redefinir Senha</CardTitle>
-            <CardDescription>Crie uma nova senha para sua conta</CardDescription>
+            <CardTitle className="text-2xl font-bold tracking-tight text-[#1a4d2e]">
+              Redefinir Senha
+            </CardTitle>
+            <CardDescription className="text-slate-500">
+              Crie uma nova senha para sua conta
+            </CardDescription>
           </CardHeader>
-          <form onSubmit={handleUpdatePassword}>
+          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Nova Senha</Label>
@@ -172,32 +158,44 @@ export default function ResetPassword() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="h-12 px-4"
+                  className="h-12 px-4 focus-visible:ring-[#1a4d2e]"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
-                  minLength={6}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  className="h-12 px-4"
+                  className="h-12 px-4 focus-visible:ring-[#1a4d2e]"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  disabled={loading}
-                  minLength={6}
+                  disabled={isSubmitting}
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col pt-4 space-y-4">
-              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                {loading ? 'Atualizando...' : 'Atualizar Senha'}
+            <CardFooter className="flex flex-col pt-4 space-y-3">
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-bold bg-[#7fff00] text-[#1a4d2e] hover:bg-[#6be600] transition-colors"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                Redefinir senha
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/login')}
+                className="w-full h-12 text-base border-slate-200 text-slate-600 hover:bg-slate-100"
+                disabled={isSubmitting}
+              >
+                Cancelar
               </Button>
             </CardFooter>
           </form>
