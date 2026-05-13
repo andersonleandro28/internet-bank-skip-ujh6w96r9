@@ -50,6 +50,32 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
+
+    // Limpar tentativas com mais de 15 minutos
+    await supabaseAdmin.from('password_reset_attempts').delete().lt('created_at', fifteenMinsAgo)
+
+    // Contar tentativas recentes
+    const { count: attemptsCount, error: countError } = await supabaseAdmin
+      .from('password_reset_attempts')
+      .select('*', { count: 'exact', head: true })
+      .eq('email', email)
+      .gte('created_at', fifteenMinsAgo)
+
+    if (countError) {
+      console.error('Erro ao contar tentativas:', countError)
+    }
+
+    if (attemptsCount !== null && attemptsCount >= 3) {
+      return new Response(
+        JSON.stringify({ error: 'Muitos pedidos. Tente novamente em 15 minutos' }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
     const token = crypto.randomUUID().replace(/-/g, '')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
@@ -67,6 +93,8 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    await supabaseAdmin.from('password_reset_attempts').insert({ email })
 
     const resetLink = `https://www.aclop.com.br/reset-senha?token=${token}`
     const subject = 'Redefinir sua senha - Aclop'
