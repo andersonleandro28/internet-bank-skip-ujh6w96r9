@@ -43,12 +43,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const signUp = async (email: string, password: string, options?: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { ...options, emailRedirectTo: `${window.location.origin}/` },
-    })
-    return { data, error }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { ...options, emailRedirectTo: `${window.location.origin}/login?verified=true` },
+      })
+      if (error) {
+        console.error('[Supabase Auth Diagnostic] Erro no signUp:', error)
+      }
+      return { data, error }
+    } catch (err) {
+      console.error('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err)
+      return { error: err }
+    }
   }
 
   const signIn = async (email: string, password: string) => {

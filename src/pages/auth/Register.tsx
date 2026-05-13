@@ -170,7 +170,24 @@ export default function Register() {
         data: { tipo, name: tipo === 'PF' ? nome : razaoSocial },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('[Diagnostic SMTP/Auth] Erro no signUp:', error)
+        if (
+          error.status === 429 ||
+          (error.message && error.message.toLowerCase().includes('rate limit'))
+        ) {
+          throw new Error(
+            'Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.',
+          )
+        }
+        if (error.message && error.message.toLowerCase().includes('email')) {
+          throw new Error(
+            `Houve um problema no envio do e-mail de confirmação. Verifique seu e-mail ou tente novamente mais tarde. Detalhes: ${error.message}`,
+          )
+        }
+        throw error
+      }
+
       if (!data?.user) throw new Error('Erro ao criar usuário')
 
       if (data.user.identities && data.user.identities.length === 0) {
@@ -274,8 +291,9 @@ export default function Register() {
               Cadastro recebido!
             </h2>
             <p className="text-slate-500 text-base leading-relaxed">
-              Aguardando aprovação do administrador. Você receberá um e-mail assim que sua conta for
-              ativada.
+              Enviamos um e-mail de confirmação para <strong>{email}</strong>. Por favor, verifique
+              sua caixa de entrada e clique no link para confirmar seu endereço. Após a confirmação,
+              você poderá aguardar a aprovação do administrador.
             </p>
             <Button
               className="mt-8 w-full h-14 text-base font-medium rounded-xl"

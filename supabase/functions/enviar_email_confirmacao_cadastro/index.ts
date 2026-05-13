@@ -46,11 +46,19 @@ Deno.serve(async (req) => {
       payload: record,
     })
 
+    if (!success) {
+      console.error(
+        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
+      )
+    } else {
+      console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
+    }
+
     return new Response(JSON.stringify({ success }), {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error(error)
+    console.error(`[Edge Function] Exceção crítica em enviar_email_confirmacao_cadastro:`, error)
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
