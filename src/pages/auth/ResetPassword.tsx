@@ -80,7 +80,7 @@ export default function ResetPassword() {
     setIsSubmitting(true)
     try {
       const { data, error } = await supabase.functions.invoke('redefinir-senha', {
-        body: { token, password },
+        body: { token, nova_senha: password },
       })
 
       if (error) throw error
