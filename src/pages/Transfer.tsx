@@ -116,57 +116,54 @@ export default function Transfer() {
     if (!user || !conta || amount <= 0 || total > conta.saldo) return
     setLoading(true)
 
-    const { error: saldoErr } = await supabase
-      .from('contas')
-      .update({ saldo: conta.saldo - total })
-      .eq('id', conta.id)
-    if (saldoErr) {
-      toast.error('Erro de saldo')
-      return setLoading(false)
-    }
+    const tipo_operacao = tab === 'PIX' ? 'pix_enviado' : 'transferencia'
+    const descricao =
+      tab === 'PIX'
+        ? `PIX para ${name} (${pixKey})`
+        : `TED para ${name} (Ag: ${tedAgency} CC: ${tedAccount})`
 
-    await supabase.from('requisicoes').insert({
-      user_id: user.id,
-      tipo: tab.toLowerCase(),
-      valor: amount,
-      taxa_aplicada: taxa,
-      valor_total: total,
-      status: 'pendente',
-      metadados:
-        tab === 'PIX'
-          ? { chave_pix: pixKey, favorecido: name }
-          : { banco: tedBank, agencia: tedAgency, conta: tedAccount, favorecido: name },
-    })
-
-    if (saveFavorite) {
-      await supabase.from('favorecidos').insert({
-        user_id: user.id,
-        tipo: tab,
-        nome: name,
-        salvo: true,
-        chave_pix: tab === 'PIX' ? pixKey : null,
-        banco: tab === 'TED' ? tedBank : null,
-        agencia: tab === 'TED' ? tedAgency : null,
-        conta: tab === 'TED' ? tedAccount : null,
+    try {
+      const { data, error } = await supabase.functions.invoke('inserir-transacao', {
+        body: { tipo_operacao, valor: amount, descricao },
       })
-      const { data } = await supabase
-        .from('favorecidos')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('salvo', true)
-      setFavorites(data || [])
-    }
 
-    toast.success('Transferência enviada com sucesso')
-    await refreshData()
-    setAmountStr('0,00')
-    setName('')
-    setPixKey('')
-    setTedBank('')
-    setTedAgency('')
-    setTedAccount('')
-    setSaveFavorite(false)
-    setLoading(false)
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      if (saveFavorite) {
+        await supabase.from('favorecidos').insert({
+          user_id: user.id,
+          tipo: tab,
+          nome: name,
+          salvo: true,
+          chave_pix: tab === 'PIX' ? pixKey : null,
+          banco: tab === 'TED' ? tedBank : null,
+          agencia: tab === 'TED' ? tedAgency : null,
+          conta: tab === 'TED' ? tedAccount : null,
+        })
+        const { data: favs } = await supabase
+          .from('favorecidos')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('salvo', true)
+        setFavorites(favs || [])
+      }
+
+      toast.success('Transferência realizada com sucesso')
+      await refreshData()
+      setAmountStr('0,00')
+      setName('')
+      setPixKey('')
+      setTedBank('')
+      setTedAgency('')
+      setTedAccount('')
+      setSaveFavorite(false)
+    } catch (err: any) {
+      console.error('Erro na transferência:', err)
+      toast.error(err.message || 'Erro ao realizar transferência')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const deleteFav = async (id: string) => {

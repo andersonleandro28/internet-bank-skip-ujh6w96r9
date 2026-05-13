@@ -62,14 +62,16 @@ export default function Login() {
         if (
           error.status === 429 ||
           error.message?.includes('rate limit') ||
-          (error as any).code === 'over_email_send_rate_limit'
+          (error as any).code === 'over_email_send_rate_limit' ||
+          error.message?.includes('Muitos')
         ) {
           setErrorMsg(
             'Muitos e-mails enviados. Aguarde alguns instantes antes de tentar novamente.',
           )
         } else {
           setErrorMsg(
-            'Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.',
+            error.message ||
+              'Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.',
           )
         }
       } else {

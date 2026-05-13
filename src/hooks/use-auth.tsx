@@ -8,7 +8,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, options?: any) => Promise<{ error: any; data?: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
-  resetPasswordForEmail: (email: string, redirectTo?: string) => Promise<{ error: any }>
+  resetPasswordForEmail: (email: string) => Promise<{ error: any }>
   updatePassword: (password: string) => Promise<{ error: any }>
   loading: boolean
 }
@@ -74,11 +74,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
-  const resetPasswordForEmail = async (email: string, redirectTo?: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${window.location.origin}/reset-senha`,
+  const resetPasswordForEmail = async (email: string) => {
+    const { data, error } = await supabase.functions.invoke('enviar-reset-senha', {
+      body: { email },
     })
-    return { error }
+    if (error) return { error }
+    if (data?.error) return { error: new Error(data.error) }
+    return { error: null }
   }
 
   const updatePassword = async (password: string) => {
