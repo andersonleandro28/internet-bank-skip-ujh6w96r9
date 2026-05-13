@@ -50,30 +50,32 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
+    const threeMinsAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString()
 
-    // Limpar tentativas com mais de 15 minutos
-    await supabaseAdmin
-      .from('password_reset_attempts')
-      .delete()
-      .lt('created_at', fifteenMinsAgo)
+    // Limpar tentativas com mais de 3 minutos
+    await supabaseAdmin.from('password_reset_attempts').delete().lt('created_at', threeMinsAgo)
 
     // Contar tentativas recentes
     const { count: attemptsCount, error: countError } = await supabaseAdmin
       .from('password_reset_attempts')
       .select('*', { count: 'exact', head: true })
       .eq('email', email)
-      .gte('created_at', fifteenMinsAgo)
+      .gte('created_at', threeMinsAgo)
 
     if (countError) {
       console.error('Erro ao contar tentativas:', countError)
     }
 
     if (attemptsCount !== null && attemptsCount >= 3) {
-      return new Response(JSON.stringify({ error: 'Muitos pedidos. Tente novamente em 15 minutos' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      // Retorna 200 para evitar que interceptadores de rede acusem erro fatal,
+      // permitindo que o frontend trate a mensagem graciosamente.
+      return new Response(
+        JSON.stringify({ error: 'Muitos pedidos. Tente novamente em alguns minutos.' }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const token = crypto.randomUUID().replace(/-/g, '')

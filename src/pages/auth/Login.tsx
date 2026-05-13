@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Card,
@@ -28,6 +28,24 @@ export default function Login() {
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
+  const [cooldownTime, setCooldownTime] = useState(0)
+
+  useEffect(() => {
+    const lastRequest = localStorage.getItem('lastResetRequest')
+    if (lastRequest) {
+      const elapsed = Math.floor((Date.now() - parseInt(lastRequest)) / 1000)
+      if (elapsed < 60) {
+        setCooldownTime(60 - elapsed)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (cooldownTime > 0) {
+      const timer = setTimeout(() => setCooldownTime(cooldownTime - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [cooldownTime])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,25 +70,38 @@ export default function Login() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (cooldownTime > 0) {
+      setErrorMsg(`Aguarde ${cooldownTime} segundos para solicitar novamente.`)
+      return
+    }
+
     setResetLoading(true)
     setErrorMsg('')
     try {
-      const { error } = await resetPasswordForEmail(resetEmail)
+      const response: any = await resetPasswordForEmail(resetEmail)
+      const error = response?.error || response?.data?.error
+
       setResetLoading(false)
 
       if (error) {
+        const errorMsgStr = typeof error === 'string' ? error : error?.message || ''
+
         if (
-          error.status === 429 ||
-          error.message?.includes('rate limit') ||
-          (error as any).code === 'over_email_send_rate_limit' ||
-          error.message?.includes('Muitos')
+          error?.status === 429 ||
+          errorMsgStr.includes('rate limit') ||
+          error?.code === 'over_email_send_rate_limit' ||
+          errorMsgStr.includes('Muitos') ||
+          errorMsgStr.includes('pedidos')
         ) {
           setErrorMsg(
             'Muitos e-mails enviados. Aguarde alguns instantes antes de tentar novamente.',
           )
+          setCooldownTime(60)
+          localStorage.setItem('lastResetRequest', Date.now().toString())
         } else {
           setErrorMsg(
-            error.message ||
+            errorMsgStr ||
               'Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.',
           )
         }
@@ -80,17 +111,25 @@ export default function Login() {
           description:
             'Se o email existir em nossa base, você receberá um link para redefinir sua senha.',
         })
+        setCooldownTime(60)
+        localStorage.setItem('lastResetRequest', Date.now().toString())
         setIsForgotPassword(false)
         setResetEmail('')
       }
     } catch (error: any) {
       setResetLoading(false)
+      const errorMsgStr = typeof error === 'string' ? error : error?.message || ''
+
       if (
         error?.status === 429 ||
-        error?.message?.includes('rate limit') ||
-        error?.code === 'over_email_send_rate_limit'
+        errorMsgStr.includes('rate limit') ||
+        error?.code === 'over_email_send_rate_limit' ||
+        errorMsgStr.includes('Muitos') ||
+        errorMsgStr.includes('pedidos')
       ) {
         setErrorMsg('Muitos e-mails enviados. Aguarde alguns instantes antes de tentar novamente.')
+        setCooldownTime(60)
+        localStorage.setItem('lastResetRequest', Date.now().toString())
       } else {
         setErrorMsg('Erro ao enviar email de recuperação. Verifique o endereço e tente novamente.')
       }
@@ -139,8 +178,16 @@ export default function Login() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col pt-4 space-y-4">
-                  <Button type="submit" className="w-full h-12 text-base" disabled={resetLoading}>
-                    {resetLoading ? 'Enviando...' : 'Enviar link de recuperação'}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base"
+                    disabled={resetLoading || cooldownTime > 0}
+                  >
+                    {resetLoading
+                      ? 'Enviando...'
+                      : cooldownTime > 0
+                        ? `Aguarde ${cooldownTime}s`
+                        : 'Enviar link de recuperação'}
                   </Button>
                   <Button
                     type="button"
