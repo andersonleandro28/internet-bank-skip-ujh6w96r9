@@ -3,7 +3,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
 
     // Cliente Supabase regular (com o token JWT, se presente)
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader || '' } }
+      global: { headers: { Authorization: authHeader || '' } },
     })
 
     // Cliente Admin para usar Supabase admin API (update user) e dar bypass no RLS
@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     // 4.b Atualizar senha do usuário em auth.users
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       tokenData.user_id,
-      { password: nova_senha }
+      { password: nova_senha },
     )
 
     if (updateError) {
