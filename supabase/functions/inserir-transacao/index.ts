@@ -12,7 +12,12 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  let etapa = 'Inicio'
+
   try {
+    console.log(JSON.stringify({ severity: 'INFO', message: 'Iniciando inserir-transacao', timestamp: new Date().toISOString() }))
+    
+    etapa = 'Autenticação'
     const authHeader = req.headers.get('Authorization')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || ''
@@ -21,70 +26,62 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader || '' } },
     })
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Não autorizado')
     }
 
+    console.log(JSON.stringify({ severity: 'INFO', message: `Autenticado: User ID: ${user.id}` }))
+
+    etapa = 'Leitura do Body'
     const body = await req.json().catch(() => ({}))
     const { tipo_operacao, valor, descricao } = body
 
+    console.log(JSON.stringify({ severity: 'INFO', message: `Dados recebidos: Operação: ${tipo_operacao}, Valor: ${valor}` }))
+
     if (!tipo_operacao || typeof valor !== 'number' || descricao === undefined) {
-      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Campos obrigatórios ausentes')
     }
 
     if (valor <= 0) {
-      return new Response(JSON.stringify({ error: 'Valor deve ser maior que zero' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Valor deve ser maior que zero')
     }
 
+    etapa = 'Calculo de Taxa'
     let taxa = 0
     let desc_op = ''
     let desc_taxa = ''
 
     switch (tipo_operacao) {
       case 'pix_enviado':
-        taxa = Math.max(valor * 0.005, 0.5)
+        taxa = Math.max(valor * 0.005, 0.50)
         desc_op = 'PIX Enviado'
         desc_taxa = 'PIX'
         break
       case 'boleto_pago':
-        taxa = Math.max(valor * 0.0042, 2.0)
+        taxa = Math.max(valor * 0.0042, 2.00)
         desc_op = 'Boleto Pago'
         desc_taxa = 'Boleto'
         break
       case 'recarga_cartao':
-        taxa = Math.max(valor * 0.005, 1.0)
+        taxa = Math.max(valor * 0.005, 1.00)
         desc_op = 'Recarga Cartão'
         desc_taxa = 'Cartão'
         break
       case 'transferencia':
-        taxa = Math.max(valor * 0.001, 1.5)
+        taxa = Math.max(valor * 0.001, 1.50)
         desc_op = 'Transferência'
         desc_taxa = 'Transferência'
         break
       default:
-        return new Response(JSON.stringify({ error: 'Tipo de operação inválido' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
+        throw new Error('Tipo de operação inválido')
     }
 
+    console.log(JSON.stringify({ severity: 'INFO', message: `Taxa calculada: ${taxa}` }))
     const descricaoFinal = descricao || desc_op
 
-    // 2. Buscar saldo_anterior
+    etapa = 'Busca de Saldo'
     const { data: conta, error: contaError } = await supabaseClient
       .from('contas')
       .select('saldo')
@@ -92,67 +89,79 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (contaError || !conta) {
-      return new Response(JSON.stringify({ error: 'Conta não encontrada' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Conta não encontrada')
     }
 
     const saldo_anterior = Number(conta.saldo)
-
-    // 4. Validar saldo
-    if (saldo_anterior < valor + taxa) {
-      return new Response(JSON.stringify({ error: 'Saldo insuficiente para esta operação' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    const total_necessario = valor + taxa
+    
+    if (saldo_anterior < total_necessario) {
+      throw new Error('Saldo insuficiente para esta operação')
     }
 
-    // 6 e 7. Inserir atomicamente via RPC
-    const { data: rpcData, error: rpcError } = await supabaseClient.rpc(
-      'inserir_transacao_atomicamente',
-      {
-        p_user_id: user.id,
-        p_valor: valor,
-        p_taxa: taxa,
-        p_desc_op: desc_op,
-        p_desc_taxa: desc_taxa,
-        p_descricao_extra: descricaoFinal,
-      },
-    )
+    etapa = 'Execução da Transação (RPC)'
+    console.log(JSON.stringify({ severity: 'INFO', message: 'Iniciando RPC inserir_transacao_atomicamente' }))
+    
+    const { data: rpcData, error: rpcError } = await supabaseClient.rpc('inserir_transacao_atomicamente', {
+      p_user_id: user.id,
+      p_valor: valor,
+      p_taxa: taxa,
+      p_desc_op: desc_op,
+      p_desc_taxa: desc_taxa,
+      p_descricao_extra: descricaoFinal
+    })
 
     if (rpcError) {
-      console.error('Erro na RPC:', rpcError)
       if (rpcError.message.includes('Saldo insuficiente')) {
-        return new Response(JSON.stringify({ error: 'Saldo insuficiente para esta operação' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
+         throw new Error('Saldo insuficiente para esta operação')
       }
-      return new Response(JSON.stringify({ error: 'Erro ao processar transação' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error(rpcError.message)
     }
 
-    return new Response(
-      JSON.stringify({
-        data: {
-          message: 'Transação realizada com sucesso',
-          operacao_id: rpcData.operacao_id,
-          taxa_id: rpcData.taxa_id,
-          novo_saldo: rpcData.novo_saldo,
-        },
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    console.log(JSON.stringify({ severity: 'INFO', message: 'Transação concluída com sucesso', rpcData }))
+
+    return new Response(JSON.stringify({
+      data: {
+        message: 'Transação realizada com sucesso',
+        operacao_id: rpcData.operacao_id,
+        taxa_id: rpcData.taxa_id,
+        novo_saldo: rpcData.novo_saldo
+      }
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+
   } catch (error: any) {
-    console.error('Exceção:', error)
-    return new Response(JSON.stringify({ error: 'Erro ao processar transação' }), {
-      status: 500,
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    
+    const errorDetails = {
+      etapa,
+      mensagemOriginal: errorMsg,
+      timestamp: new Date().toISOString()
+    }
+    
+    console.error(JSON.stringify({ 
+      severity: 'ERROR',
+      message: `Falha ao processar transação na etapa: ${etapa}`,
+      details: errorDetails
+    }))
+    
+    const status = errorMsg.includes('Não autorizado') ? 401 : 400
+    
+    // Mensagem amigável para o usuário
+    let userMessage = errorMsg
+    if (errorMsg.includes('PGRST')) {
+      userMessage = 'Erro interno ao processar a transação no banco de dados'
+    } else if (errorMsg.includes('JSON')) {
+      userMessage = 'Formato de dados inválido'
+    }
+
+    return new Response(JSON.stringify({ 
+      error: userMessage,
+      details: errorDetails
+    }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

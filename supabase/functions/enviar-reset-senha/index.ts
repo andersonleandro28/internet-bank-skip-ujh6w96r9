@@ -53,7 +53,10 @@ Deno.serve(async (req: Request) => {
     const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
 
     // Limpar tentativas com mais de 15 minutos
-    await supabaseAdmin.from('password_reset_attempts').delete().lt('created_at', fifteenMinsAgo)
+    await supabaseAdmin
+      .from('password_reset_attempts')
+      .delete()
+      .lt('created_at', fifteenMinsAgo)
 
     // Contar tentativas recentes
     const { count: attemptsCount, error: countError } = await supabaseAdmin
@@ -67,13 +70,10 @@ Deno.serve(async (req: Request) => {
     }
 
     if (attemptsCount !== null && attemptsCount >= 3) {
-      return new Response(
-        JSON.stringify({ error: 'Muitos pedidos. Tente novamente em 15 minutos' }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      )
+      return new Response(JSON.stringify({ error: 'Muitos pedidos. Tente novamente em 15 minutos' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const token = crypto.randomUUID().replace(/-/g, '')
