@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
 
     // Cliente Supabase com token
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader || '' } }
+      global: { headers: { Authorization: authHeader || '' } },
     })
 
     // Cliente Admin para dar bypass no RLS e atualizar a senha do usuario
@@ -66,7 +66,7 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       tokenData.user_id,
-      { password: nova_senha }
+      { password: nova_senha },
     )
 
     if (updateError) {

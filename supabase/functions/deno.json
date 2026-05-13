@@ -9,6 +9,7 @@
     "testar_resend": 9,
     "testar_resend_detalhado": 9,
     "testar_api_key": 5,
-    "redefinir-senha": 2
+    "redefinir-senha": 2,
+    "enviar-reset-senha": 1
   }
 }

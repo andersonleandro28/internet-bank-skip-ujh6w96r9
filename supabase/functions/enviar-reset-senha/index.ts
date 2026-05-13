@@ -68,9 +68,9 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const resetLink = `https://aclop.com.br/reset-senha?token=${token}`
+    const resetLink = `https://www.aclop.com.br/reset-senha?token=${token}`
     const subject = 'Redefinir sua senha - Aclop'
-    const htmlBody = `Clique no link para redefinir sua senha: <a href="${resetLink}">${resetLink}</a>. Link válido por 1 hora.`
+    const htmlBody = `<p>Clique no link para redefinir sua senha:</p><a href='${resetLink}'>${resetLink}</a><p>Link válido por 1 hora.</p>`
 
     if (RESEND_API_KEY) {
       let success = false
@@ -94,6 +94,7 @@ Deno.serve(async (req: Request) => {
               to: [email],
               subject: subject,
               html: htmlBody,
+              reply_to: 'suporte@aclop.com.br',
             }),
           })
 
