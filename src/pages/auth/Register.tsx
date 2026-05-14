@@ -173,6 +173,9 @@ export default function Register() {
         data: { tipo, name: tipo === 'PF' ? nome : razaoSocial },
       })
 
+      let userId = data?.user?.id
+      let identities = data?.user?.identities
+
       if (error) {
         console.warn('[Diagnostic SMTP/Auth] Erro no signUp:', error.message || error)
 
@@ -181,7 +184,8 @@ export default function Register() {
           (error.message && error.message.toLowerCase().includes('rate limit'))
         const isEmailError =
           error.status === 500 ||
-          (error.message && error.message.toLowerCase().includes('email')) ||
+          (error.message &&
+            error.message.toLowerCase().includes('error sending confirmation email')) ||
           (error.message && error.message.includes('HTTP 500'))
 
         if (isRateLimit) {
@@ -189,21 +193,32 @@ export default function Register() {
             'Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.',
           )
         }
+
         if (isEmailError) {
-          throw new Error(
-            'Houve uma instabilidade no provedor de e-mail do sistema, o que impediu a conclusão do seu cadastro. Por favor, aguarde alguns minutos e tente novamente.',
-          )
+          // O Supabase falhou ao tentar disparar o e-mail internamente (erro 500),
+          // mas a conta geralmente é criada no banco antes do disparo.
+          // Como o e-mail nativo está desabilitado, tentamos realizar o login
+          // com os dados fornecidos para recuperar o ID e continuar o fluxo.
+          const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
+
+          if (signInData?.user?.id) {
+            userId = signInData.user.id
+            identities = signInData.user.identities
+          } else {
+            throw new Error(
+              'Ocorreu uma instabilidade na comunicação com o servidor. Por favor, tente fazer login ou aguarde alguns minutos e tente novamente.',
+            )
+          }
+        } else {
+          throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
         }
-        throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
       }
 
-      if (!data?.user) throw new Error('Erro ao criar usuário')
+      if (!userId) throw new Error('Erro ao criar usuário')
 
-      if (data.user.identities && data.user.identities.length === 0) {
+      if (identities && identities.length === 0) {
         throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
       }
-
-      const userId = data.user.id
 
       const { error: userError } = await supabase.from('usuarios').insert({
         id: userId,
