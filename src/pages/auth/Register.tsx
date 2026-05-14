@@ -171,21 +171,27 @@ export default function Register() {
       })
 
       if (error) {
-        console.error('[Diagnostic SMTP/Auth] Erro no signUp:', error)
-        if (
+        console.warn('[Diagnostic SMTP/Auth] Erro no signUp:', error.message || error)
+
+        const isRateLimit =
           error.status === 429 ||
           (error.message && error.message.toLowerCase().includes('rate limit'))
-        ) {
+        const isEmailError =
+          error.status === 500 ||
+          (error.message && error.message.toLowerCase().includes('email')) ||
+          (error.message && error.message.includes('HTTP 500'))
+
+        if (isRateLimit) {
           throw new Error(
             'Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.',
           )
         }
-        if (error.message && error.message.toLowerCase().includes('email')) {
+        if (isEmailError) {
           throw new Error(
-            `Houve um problema no envio do e-mail de confirmação. Verifique seu e-mail ou tente novamente mais tarde. Detalhes: ${error.message}`,
+            'Houve uma instabilidade na comunicação com o provedor de e-mail. Seu cadastro pode ter sido recebido parcialmente. Por favor, aguarde alguns minutos e contate o suporte caso não consiga fazer login.',
           )
         }
-        throw error
+        throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
       }
 
       if (!data?.user) throw new Error('Erro ao criar usuário')
@@ -271,7 +277,7 @@ export default function Register() {
         icon: <CheckCircle2 className="w-5 h-5 text-white" />,
       })
     } catch (err: any) {
-      console.error(err)
+      console.warn('[Register Error]', err.message || err)
       setErrorMsg(err.message || 'Ocorreu um erro inesperado')
     } finally {
       setLoading(false)

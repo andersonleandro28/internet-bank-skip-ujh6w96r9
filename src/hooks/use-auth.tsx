@@ -50,11 +50,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: { ...options, emailRedirectTo: `${window.location.origin}/login?verified=true` },
       })
       if (error) {
-        console.error('[Supabase Auth Diagnostic] Erro no signUp:', error)
+        console.warn('[Supabase Auth Diagnostic] Erro no signUp:', error.message || error)
       }
       return { data, error }
-    } catch (err) {
-      console.error('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err)
+    } catch (err: any) {
+      console.warn('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err.message || err)
       return { error: err }
     }
   }
