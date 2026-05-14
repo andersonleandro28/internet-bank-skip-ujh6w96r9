@@ -130,6 +130,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [success, setSuccess] = useState(false)
+  const [registeredUserId, setRegisteredUserId] = useState('')
+  const [resendLoading, setResendLoading] = useState(false)
 
   const handleTipoSelect = (novoTipo: TipoConta) => {
     setIsFading(true)
@@ -271,6 +273,18 @@ export default function Register() {
         }
       }
 
+      // Dispara o email de boas-vindas/confirmação assincronamente (fluxo manual)
+      supabase.functions
+        .invoke('enviar_email_confirmacao_cadastro', {
+          body: {
+            type: 'INSERT',
+            table: 'usuarios',
+            record: { id: userId, email, tipo, status: 'pendente' },
+          },
+        })
+        .catch((err) => console.warn('Erro ao disparar email assíncrono:', err))
+
+      setRegisteredUserId(userId)
       setSuccess(true)
       toast.success('Cadastro enviado com sucesso!', {
         style: { background: '#22c55e', color: '#fff', border: 'none' },
@@ -281,6 +295,26 @@ export default function Register() {
       setErrorMsg(err.message || 'Ocorreu um erro inesperado')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResendEmail = async () => {
+    setResendLoading(true)
+    try {
+      const { error } = await supabase.functions.invoke('enviar_email_confirmacao_cadastro', {
+        body: {
+          type: 'INSERT',
+          table: 'usuarios',
+          record: { id: registeredUserId, email, tipo, status: 'pendente' },
+        },
+      })
+      if (error) throw error
+      toast.success('E-mail reenviado com sucesso!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Ocorreu um erro ao reenviar o e-mail. Tente novamente.')
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -297,16 +331,26 @@ export default function Register() {
               Cadastro recebido!
             </h2>
             <p className="text-slate-500 text-base leading-relaxed">
-              Enviamos um e-mail de confirmação para <strong>{email}</strong>. Por favor, verifique
-              sua caixa de entrada e clique no link para confirmar seu endereço. Após a confirmação,
-              você poderá aguardar a aprovação do administrador.
+              Seu cadastro foi recebido com sucesso! Enviamos um e-mail de boas-vindas para{' '}
+              <strong>{email}</strong>. Sua conta está em análise e você será notificado assim que
+              for aprovada pelo administrador.
             </p>
-            <Button
-              className="mt-8 w-full h-14 text-base font-medium rounded-xl"
-              onClick={() => navigate('/login')}
-            >
-              Voltar para o Login
-            </Button>
+            <div className="flex flex-col w-full gap-3 mt-8">
+              <Button
+                className="w-full h-14 text-base font-medium rounded-xl"
+                onClick={() => navigate('/login')}
+              >
+                Voltar para o Login
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-14 text-base font-medium rounded-xl"
+                onClick={handleResendEmail}
+                disabled={resendLoading}
+              >
+                {resendLoading ? 'Reenviando...' : 'Não recebeu o e-mail? Reenviar'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
