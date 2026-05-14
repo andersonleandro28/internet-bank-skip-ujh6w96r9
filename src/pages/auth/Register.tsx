@@ -182,11 +182,6 @@ export default function Register() {
         const isRateLimit =
           error.status === 429 ||
           (error.message && error.message.toLowerCase().includes('rate limit'))
-        const isEmailError =
-          error.status === 500 ||
-          (error.message &&
-            error.message.toLowerCase().includes('error sending confirmation email')) ||
-          (error.message && error.message.includes('HTTP 500'))
 
         if (isRateLimit) {
           throw new Error(
@@ -194,24 +189,7 @@ export default function Register() {
           )
         }
 
-        if (isEmailError) {
-          // O Supabase falhou ao tentar disparar o e-mail internamente (erro 500),
-          // mas a conta geralmente é criada no banco antes do disparo.
-          // Como o e-mail nativo está desabilitado, tentamos realizar o login
-          // com os dados fornecidos para recuperar o ID e continuar o fluxo.
-          const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
-
-          if (signInData?.user?.id) {
-            userId = signInData.user.id
-            identities = signInData.user.identities
-          } else {
-            throw new Error(
-              'Ocorreu uma instabilidade na comunicação com o servidor. Por favor, tente fazer login ou aguarde alguns minutos e tente novamente.',
-            )
-          }
-        } else {
-          throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
-        }
+        throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
       }
 
       if (!userId) throw new Error('Erro ao criar usuário')
