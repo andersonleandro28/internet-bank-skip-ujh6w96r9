@@ -130,6 +130,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [success, setSuccess] = useState(false)
+  const [emailSent, setEmailSent] = useState(true)
   const [registeredUserId, setRegisteredUserId] = useState('')
   const [resendLoading, setResendLoading] = useState(false)
 
@@ -190,7 +191,7 @@ export default function Register() {
         }
         if (isEmailError) {
           throw new Error(
-            'Houve uma instabilidade na comunicação com o provedor de e-mail. Seu cadastro pode ter sido recebido parcialmente. Por favor, aguarde alguns minutos e contate o suporte caso não consiga fazer login.',
+            'Houve uma instabilidade no provedor de e-mail do sistema, o que impediu a conclusão do seu cadastro. Por favor, aguarde alguns minutos e tente novamente.',
           )
         }
         throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
@@ -273,23 +274,32 @@ export default function Register() {
         }
       }
 
-      // Dispara o email de boas-vindas/confirmação assincronamente (fluxo manual)
-      supabase.functions
-        .invoke('enviar_email_confirmacao_cadastro', {
+      // Dispara o email de boas-vindas/confirmação (fluxo manual via Edge Function)
+      const { data: emailData, error: emailError } = await supabase.functions.invoke(
+        'enviar_email_confirmacao_cadastro',
+        {
           body: {
             type: 'INSERT',
             table: 'usuarios',
             record: { id: userId, email, tipo, status: 'pendente' },
           },
-        })
-        .catch((err) => console.warn('Erro ao disparar email assíncrono:', err))
+        },
+      )
 
+      const enviouComSucesso = !emailError && emailData?.success
+
+      setEmailSent(!!enviouComSucesso)
       setRegisteredUserId(userId)
       setSuccess(true)
-      toast.success('Cadastro enviado com sucesso!', {
-        style: { background: '#22c55e', color: '#fff', border: 'none' },
-        icon: <CheckCircle2 className="w-5 h-5 text-white" />,
-      })
+
+      if (enviouComSucesso) {
+        toast.success('Cadastro enviado com sucesso!', {
+          style: { background: '#22c55e', color: '#fff', border: 'none' },
+          icon: <CheckCircle2 className="w-5 h-5 text-white" />,
+        })
+      } else {
+        toast.warning('Cadastro concluído, mas houve um atraso no envio do e-mail.')
+      }
     } catch (err: any) {
       console.warn('[Register Error]', err.message || err)
       setErrorMsg(err.message || 'Ocorreu um erro inesperado')
@@ -301,7 +311,7 @@ export default function Register() {
   const handleResendEmail = async () => {
     setResendLoading(true)
     try {
-      const { error } = await supabase.functions.invoke('enviar_email_confirmacao_cadastro', {
+      const { data, error } = await supabase.functions.invoke('enviar_email_confirmacao_cadastro', {
         body: {
           type: 'INSERT',
           table: 'usuarios',
@@ -309,6 +319,9 @@ export default function Register() {
         },
       })
       if (error) throw error
+      if (data && !data.success) throw new Error('Falha no envio via Resend')
+
+      setEmailSent(true)
       toast.success('E-mail reenviado com sucesso!')
     } catch (err) {
       console.error(err)
@@ -331,9 +344,19 @@ export default function Register() {
               Cadastro recebido!
             </h2>
             <p className="text-slate-500 text-base leading-relaxed">
-              Seu cadastro foi recebido com sucesso! Enviamos um e-mail de boas-vindas para{' '}
-              <strong>{email}</strong>. Sua conta está em análise e você será notificado assim que
-              for aprovada pelo administrador.
+              {emailSent ? (
+                <>
+                  Seu cadastro foi recebido com sucesso! Enviamos um e-mail de boas-vindas para{' '}
+                  <strong>{email}</strong>. Sua conta está em análise e você será notificado assim
+                  que for aprovada pelo administrador.
+                </>
+              ) : (
+                <>
+                  Seu cadastro foi concluído e sua conta está em análise! No momento, nosso sistema
+                  de e-mails está com lentidão e o e-mail de boas-vindas para{' '}
+                  <strong>{email}</strong> não pôde ser entregue.
+                </>
+              )}
             </p>
             <div className="flex flex-col w-full gap-3 mt-8">
               <Button
@@ -348,7 +371,11 @@ export default function Register() {
                 onClick={handleResendEmail}
                 disabled={resendLoading}
               >
-                {resendLoading ? 'Reenviando...' : 'Não recebeu o e-mail? Reenviar'}
+                {resendLoading
+                  ? 'Reenviando...'
+                  : emailSent
+                    ? 'Não recebeu o e-mail? Reenviar'
+                    : 'Reenviar e-mail de confirmação'}
               </Button>
             </div>
           </CardContent>

@@ -12,9 +12,6 @@ Deno.serve(async (req) => {
       return new Response('Ignorado. Status não é pendente.', { status: 200 })
     }
 
-    // Esperar um pouco para que os perfis PF/PJ sejam inseridos pela aplicação / outros triggers
-    await sleep(3000)
-
     const user_id = record.id
     const email = record.email
     const tipoUser = record.tipo || 'PF'
@@ -47,7 +44,9 @@ Deno.serve(async (req) => {
     })
 
     if (!success) {
-      console.error(`[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`)
+      console.error(
+        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
+      )
     } else {
       console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
     }
