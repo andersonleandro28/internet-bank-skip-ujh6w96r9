@@ -179,22 +179,42 @@ export default function Register() {
       if (error) {
         console.warn('[Diagnostic SMTP/Auth] Erro no signUp:', error.message || error)
 
-        const isRateLimit =
-          error.status === 429 ||
-          (error.message && error.message.toLowerCase().includes('rate limit'))
+        const errorMsgStr = (error.message || '').toLowerCase()
+        const isEmailError =
+          errorMsgStr.includes('error sending confirmation email') ||
+          errorMsgStr.includes('unexpected_failure') ||
+          error.status === 500
 
-        if (isRateLimit) {
-          throw new Error(
-            'Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.',
-          )
+        if (isEmailError) {
+          const { data: existingUser } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('email', email)
+            .single()
+
+          if (existingUser?.id) {
+            userId = existingUser.id
+          } else {
+            throw new Error(
+              'Ocorreu um erro ao criar a conta (falha no envio de e-mail do provedor). Tente novamente.',
+            )
+          }
+        } else {
+          const isRateLimit = error.status === 429 || errorMsgStr.includes('rate limit')
+
+          if (isRateLimit) {
+            throw new Error(
+              'Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.',
+            )
+          }
+
+          throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
         }
-
-        throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
       }
 
       if (!userId) throw new Error('Erro ao criar usuário')
 
-      if (identities && identities.length === 0) {
+      if (!error && identities && identities.length === 0) {
         throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
       }
 

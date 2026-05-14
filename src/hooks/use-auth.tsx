@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { ...options, emailRedirectTo: `${window.location.origin}/login?verified=true` },
+        options: { ...options },
       })
       if (error) {
         console.warn('[Supabase Auth Diagnostic] Erro no signUp:', error.message || error)
