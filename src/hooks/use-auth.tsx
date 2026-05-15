@@ -64,9 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
+        const msg = data?.message || data?.msg || ''
         const isEmailError =
           res.status === 500 &&
-          (data?.message?.includes('confirmation email') || data?.code === 'unexpected_failure')
+          (msg.includes('confirmation email') ||
+            data?.code === 'unexpected_failure' ||
+            data?.error_code === 'unexpected_failure')
 
         if (isEmailError) {
           console.warn('[Supabase Auth Diagnostic] Ignorando erro 500 de SMTP. Simulando sucesso.')
@@ -75,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         return {
           data: null,
-          error: { message: data?.message || 'Erro ao realizar cadastro', status: res.status },
+          error: { message: msg || 'Erro ao realizar cadastro', status: res.status },
         }
       }
 
