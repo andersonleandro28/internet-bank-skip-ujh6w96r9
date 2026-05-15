@@ -208,6 +208,13 @@ export default function Register() {
             )
           }
 
+          if (
+            errorMsgStr.includes('already been registered') ||
+            errorMsgStr.includes('already exists')
+          ) {
+            throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
+          }
+
           throw new Error(error.message || 'Ocorreu um erro inesperado ao criar a conta.')
         }
       }

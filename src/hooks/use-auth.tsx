@@ -44,15 +44,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, options?: any) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { ...options },
+      const { data: funcData, error: funcError } = await supabase.functions.invoke('signup-admin', {
+        body: { email, password, data: options?.data },
       })
-      if (error) {
-        console.warn('[Supabase Auth Diagnostic] Erro no signUp:', error.message || error)
+
+      if (funcError) {
+        console.warn(
+          '[Supabase Auth Diagnostic] Erro ao invocar signup-admin:',
+          funcError.message || funcError,
+        )
+        return { error: funcError }
       }
-      return { data, error }
+
+      if (funcData?.error) {
+        console.warn(
+          '[Supabase Auth Diagnostic] Erro retornado pela edge function:',
+          funcData.error,
+        )
+        return { error: new Error(funcData.error) }
+      }
+
+      return { data: { user: funcData?.data?.user, session: null }, error: null }
     } catch (err: any) {
       console.warn('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err.message || err)
       return { error: err }
