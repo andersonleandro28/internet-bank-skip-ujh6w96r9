@@ -139,21 +139,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (data?.user) {
-      try {
-        await supabase.from('historico_logins' as any).insert({
-          user_id: data.user.id,
-          ip: 'IP não capturado', // Em uma implementação real, usaria uma edge function ou API para capturar o IP real
-          dispositivo: navigator.userAgent,
-        })
-      } catch (e) {
-        console.error('Falha ao registrar login', e)
+      if (error) {
+        return { error }
+      }
+
+      if (data?.user) {
+        try {
+          await supabase.from('historico_logins' as any).insert({
+            user_id: data.user.id,
+            ip: 'IP não capturado', // Em uma implementação real, usaria uma edge function ou API para capturar o IP real
+            dispositivo: navigator.userAgent,
+          })
+        } catch (e) {
+          console.error('Falha ao registrar login', e)
+        }
+      }
+
+      return { error: null }
+    } catch (err: any) {
+      console.warn('[Supabase Auth Diagnostic] Erro de rede interceptado no signIn:', err)
+      return {
+        error: {
+          message: err?.message?.includes('network')
+            ? 'Erro de conexão'
+            : 'Invalid login credentials',
+          status: 400,
+        },
       }
     }
-
-    return { error }
   }
 
   const signOut = async () => {

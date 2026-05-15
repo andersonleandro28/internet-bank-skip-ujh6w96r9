@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   Card,
   CardContent,
@@ -17,6 +17,7 @@ import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signIn, resetPasswordForEmail } = useAuth()
   const { toast } = useToast()
 
@@ -52,19 +53,50 @@ export default function Login() {
     setLoading(true)
     setErrorMsg('')
 
-    const { error } = await signIn(email, password)
+    try {
+      const { error } = await signIn(email, password)
 
-    if (error) {
-      if (error.message === 'Email not confirmed') {
-        setErrorMsg('Por favor, confirme seu e-mail antes de entrar.')
-      } else if (error.message === 'Invalid login credentials') {
-        setErrorMsg('E-mail ou senha incorretos.')
+      if (error) {
+        const msg = error.message?.toLowerCase() || ''
+        if (msg.includes('email not confirmed')) {
+          setErrorMsg('Por favor, confirme seu e-mail antes de entrar.')
+          toast({
+            variant: 'destructive',
+            title: 'Acesso negado',
+            description: 'Por favor, confirme seu e-mail antes de entrar.',
+          })
+        } else if (
+          msg.includes('invalid login credentials') ||
+          msg.includes('invalid') ||
+          msg.includes('credenciais')
+        ) {
+          setErrorMsg('E-mail ou senha incorretos.')
+          toast({
+            variant: 'destructive',
+            title: 'Acesso negado',
+            description: 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.',
+          })
+        } else {
+          setErrorMsg('Credenciais inválidas ou erro de conexão.')
+          toast({
+            variant: 'destructive',
+            title: 'Erro de autenticação',
+            description: 'Não foi possível validar suas credenciais no momento.',
+          })
+        }
+        setLoading(false)
       } else {
-        setErrorMsg('Credenciais inválidas.')
+        const from = location.state?.from?.pathname || '/'
+        navigate(from, { replace: true })
       }
+    } catch (err: any) {
+      setErrorMsg('E-mail ou senha incorretos.')
+      toast({
+        variant: 'destructive',
+        title: 'Acesso negado',
+        description: 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.',
+      })
       setLoading(false)
-    } else {
-      navigate('/')
     }
   }
 
