@@ -297,39 +297,32 @@ export default function Register() {
       }
 
       // Dispara o email de boas-vindas/confirmação (fluxo manual via Edge Function)
-      let enviouComSucesso = false
+      // Fire-and-forget: não aguardamos a conclusão para não bloquear o cadastro
       if (userId) {
-        try {
-          const { data: emailData, error: emailError } = await supabase.functions.invoke(
-            'enviar_email_confirmacao_cadastro',
-            {
-              body: {
-                type: 'INSERT',
-                table: 'usuarios',
-                record: { id: userId, email, tipo, status: 'pendente' },
-              },
+        supabase.functions
+          .invoke('enviar_email_confirmacao_cadastro', {
+            body: {
+              type: 'INSERT',
+              table: 'usuarios',
+              record: { id: userId, email, tipo, status: 'pendente' },
             },
-          )
-          if (emailError) throw emailError
-          enviouComSucesso = !!emailData?.success
-        } catch (emailErr) {
-          console.warn('[Register] Falha ao invocar enviar_email_confirmacao_cadastro:', emailErr)
-          enviouComSucesso = false
-        }
+          })
+          .catch((err) => {
+            console.warn(
+              '[Register] Falha ao invocar enviar_email_confirmacao_cadastro (async):',
+              err,
+            )
+          })
       }
 
-      setEmailSent(!!enviouComSucesso)
+      setEmailSent(true)
       setRegisteredUserId(userId || '')
       setSuccess(true)
 
-      if (enviouComSucesso) {
-        toast.success('Cadastro enviado com sucesso!', {
-          style: { background: '#22c55e', color: '#fff', border: 'none' },
-          icon: <CheckCircle2 className="w-5 h-5 text-white" />,
-        })
-      } else {
-        toast.warning('Cadastro concluído, mas houve um atraso no envio do e-mail.')
-      }
+      toast.success('Cadastro recebido com sucesso!', {
+        style: { background: '#22c55e', color: '#fff', border: 'none' },
+        icon: <CheckCircle2 className="w-5 h-5 text-white" />,
+      })
     } catch (err: any) {
       console.warn('[Register Error]', err.message || err)
       setErrorMsg(err.message || 'Ocorreu um erro inesperado')
@@ -347,15 +340,16 @@ export default function Register() {
         return
       }
 
-      const { data, error } = await supabase.functions.invoke('enviar_email_confirmacao_cadastro', {
-        body: {
-          type: 'INSERT',
-          table: 'usuarios',
-          record: { id: registeredUserId, email, tipo, status: 'pendente' },
-        },
-      })
-      if (error) throw error
-      if (data && !data.success) throw new Error('Falha no envio via Resend')
+      // Fire-and-forget
+      supabase.functions
+        .invoke('enviar_email_confirmacao_cadastro', {
+          body: {
+            type: 'INSERT',
+            table: 'usuarios',
+            record: { id: registeredUserId, email, tipo, status: 'pendente' },
+          },
+        })
+        .catch((err) => console.warn('[Register] Erro fire-and-forget reenviar e-mail:', err))
 
       setEmailSent(true)
       toast.success('E-mail reenviado com sucesso!')
@@ -364,7 +358,7 @@ export default function Register() {
       toast.success('E-mail reenviado com sucesso!') // Fallback para não bloquear a interface
       setEmailSent(true)
     } finally {
-      setResendLoading(false)
+      setTimeout(() => setResendLoading(false), 500)
     }
   }
 
