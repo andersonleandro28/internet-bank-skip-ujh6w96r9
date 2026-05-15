@@ -186,14 +186,13 @@ export default function Register() {
           error.status === 500
 
         if (isEmailError) {
-          const { data: existingUser } = await supabase
+          const { data: existingUsers } = await supabase
             .from('usuarios')
             .select('id')
             .eq('email', email)
-            .single()
 
-          if (existingUser?.id) {
-            userId = existingUser.id
+          if (existingUsers && existingUsers.length > 0) {
+            userId = existingUsers[0].id
           } else {
             throw new Error(
               'Ocorreu um erro ao criar a conta (falha no envio de e-mail do provedor). Tente novamente.',
