@@ -73,13 +73,11 @@ export default function Carregar() {
   useEffect(() => {
     const getRate = async () => {
       try {
-        const res = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=brl',
-        )
-        if (!res.ok) throw new Error()
+        const res = await fetch('https://economia.awesomeapi.com.br/json/last/USDT-BRL')
+        if (!res.ok) throw new Error('Falha ao buscar cotação')
         const data = await res.json()
-        if (data?.tether?.brl) {
-          setCotacaoBrl(data.tether.brl)
+        if (data?.USDTBRL?.bid) {
+          setCotacaoBrl(parseFloat(data.USDTBRL.bid))
         } else {
           setCotacaoBrl(5.15)
         }
@@ -155,7 +153,7 @@ export default function Carregar() {
     fetchFees()
     fetchCarteiras()
 
-    const interval = setInterval(getRate, 10000)
+    const interval = setInterval(getRate, 30000)
     return () => clearInterval(interval)
   }, [session?.user?.id])
 
