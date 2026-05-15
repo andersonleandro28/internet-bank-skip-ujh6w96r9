@@ -187,19 +187,7 @@ export default function Register() {
           error.status === 500
 
         if (isEmailError) {
-          const { data: existingUsers } = await supabase
-            .from('usuarios')
-            .select('id')
-            .eq('email', email)
-
-          if (existingUsers && existingUsers.length > 0) {
-            userId = existingUsers[0].id
-          } else {
-            console.warn(
-              'Usuário não encontrado na base após falha de SMTP. Prosseguindo com fluxo simulado.',
-            )
-            userId = undefined
-          }
+          console.warn('Ignorando erro de SMTP e prosseguindo com fluxo simulado.')
         } else {
           const isRateLimit = error.status === 429 || errorMsgStr.includes('rate limit')
 
@@ -220,8 +208,21 @@ export default function Register() {
         }
       }
 
-      if (!error && identities && identities.length === 0) {
+      if (!error && data?.user && identities && identities.length === 0) {
         throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
+      }
+
+      if (!userId) {
+        const { data: existingUsers } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('email', email)
+
+        if (existingUsers && existingUsers.length > 0) {
+          userId = existingUsers[0].id
+        } else {
+          console.warn('Usuário não encontrado na base após falha de SMTP.')
+        }
       }
 
       if (userId) {
