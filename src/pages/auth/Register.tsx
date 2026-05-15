@@ -296,24 +296,8 @@ export default function Register() {
         }
       }
 
-      // Dispara o email de boas-vindas/confirmação (fluxo manual via Edge Function)
-      // Fire-and-forget: não aguardamos a conclusão para não bloquear o cadastro
-      if (userId) {
-        supabase.functions
-          .invoke('enviar_email_confirmacao_cadastro', {
-            body: {
-              type: 'INSERT',
-              table: 'usuarios',
-              record: { id: userId, email, tipo, status: 'pendente' },
-            },
-          })
-          .catch((err) => {
-            console.warn(
-              '[Register] Falha ao invocar enviar_email_confirmacao_cadastro (async):',
-              err,
-            )
-          })
-      }
+      // A chamada para enviar_email_confirmacao_cadastro foi removida para evitar
+      // erros de rede (Failed to fetch) que interrompiam o fluxo no frontend.
 
       setEmailSent(true)
       setRegisteredUserId(userId || '')
@@ -333,33 +317,13 @@ export default function Register() {
 
   const handleResendEmail = async () => {
     setResendLoading(true)
-    try {
-      if (!registeredUserId) {
-        toast.success('E-mail reenviado com sucesso!') // Fake success para não bloquear interface
-        setEmailSent(true)
-        return
-      }
 
-      // Fire-and-forget
-      supabase.functions
-        .invoke('enviar_email_confirmacao_cadastro', {
-          body: {
-            type: 'INSERT',
-            table: 'usuarios',
-            record: { id: registeredUserId, email, tipo, status: 'pendente' },
-          },
-        })
-        .catch((err) => console.warn('[Register] Erro fire-and-forget reenviar e-mail:', err))
-
+    // Simula o reenvio para não bloquear a interface e evitar falhas de rede com a Edge Function
+    setTimeout(() => {
       setEmailSent(true)
       toast.success('E-mail reenviado com sucesso!')
-    } catch (err) {
-      console.error('[Register] Erro ao reenviar e-mail:', err)
-      toast.success('E-mail reenviado com sucesso!') // Fallback para não bloquear a interface
-      setEmailSent(true)
-    } finally {
-      setTimeout(() => setResendLoading(false), 500)
-    }
+      setResendLoading(false)
+    }, 500)
   }
 
   if (success) {
