@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useBank } from '@/hooks/use-bank'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/format'
+import { QuickActions } from '@/components/dashboard/quick-actions'
 
 export default function Index() {
   const { conta, usuario, loading, error, refreshData } = useBank()
@@ -102,7 +103,7 @@ export default function Index() {
   }
 
   return (
-    <div className="flex flex-col flex-1 w-full max-w-md mx-auto">
+    <div className="flex flex-col flex-1 w-full max-w-md mx-auto pb-20">
       {/* Balance Card */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 m-5 rounded-[16px] shadow-lg animate-fade-in-up">
         <div className="flex justify-between items-center mb-4">
@@ -117,6 +118,38 @@ export default function Index() {
         <h1 className="text-[32px] leading-tight font-bold tracking-tight">
           {isVisible ? formatCurrency(animatedBalance) : 'R$ ••••••'}
         </h1>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="px-5 mb-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <h2 className="text-base font-semibold text-slate-800 mb-4">O que você precisa?</h2>
+        <QuickActions />
+      </div>
+
+      {/* Extrato Resumo */}
+      <div className="px-5 mb-6 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-base font-semibold text-slate-800">Últimas movimentações</h2>
+          <Button
+            variant="link"
+            className="text-primary h-auto p-0"
+            onClick={() => navigate('/extrato')}
+          >
+            Ver tudo
+          </Button>
+        </div>
+        <div className="bg-slate-50 rounded-[16px] p-6 text-center border border-slate-100">
+          <p className="text-slate-500 text-sm mb-2">
+            Acesse seu extrato completo para ver os detalhes
+          </p>
+          <Button
+            variant="outline"
+            className="w-full bg-white"
+            onClick={() => navigate('/extrato')}
+          >
+            Acessar extrato
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -123,12 +123,28 @@ export default function Transfer() {
         : `TED para ${name} (Ag: ${tedAgency} CC: ${tedAccount})`
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
       const { data, error } = await supabase.functions.invoke('inserir-transacao', {
         body: { tipo_operacao, valor: amount, descricao },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
 
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
+      if (error) {
+        let msg = error.message
+        try {
+          const parsed = JSON.parse(error.message)
+          if (parsed.error) msg = parsed.error
+        } catch (e) {
+          // Mantém msg original caso o parse falhe
+        }
+        throw new Error(msg || 'Erro de comunicação com o servidor.')
+      }
+
+      if (data?.error) {
+        throw new Error(data.error)
+      }
 
       if (saveFavorite) {
         await supabase.from('favorecidos').insert({
@@ -160,7 +176,17 @@ export default function Transfer() {
       setSaveFavorite(false)
     } catch (err: any) {
       console.error('Erro na transferência:', err)
-      toast.error(err.message || 'Erro ao realizar transferência')
+
+      let msg = err.message || 'Erro ao realizar transferência'
+      if (msg.includes('Saldo insuficiente')) {
+        msg = 'Seu saldo é insuficiente para realizar esta transferência.'
+      } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = 'Erro de conexão. Verifique sua internet e tente novamente.'
+      } else if (msg.includes('Não autorizado') || msg.includes('JWT')) {
+        msg = 'Sua sessão expirou. Por favor, faça login novamente.'
+      }
+
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
