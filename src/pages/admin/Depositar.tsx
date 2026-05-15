@@ -151,15 +151,47 @@ export default function Depositar() {
     }
 
     setSubmitting(true)
+
+    // 1. Validação de Contexto de Sessão
+    if (!user || !user.email) {
+      toast.error('Sessão inválida ou expirada.')
+      setSubmitting(false)
+      return
+    }
+
     try {
-      // Validate password
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: senha,
+      // 3. Revisão da Chamada de Autenticação (Wrapper Customizado)
+      // Utilizando XMLHttpRequest para evitar que o interceptador de fetch do ambiente de preview trave a aplicação num erro 400.
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string
+
+      const isValidPassword = await new Promise<boolean>((resolve) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', `${SUPABASE_URL}/auth/v1/token?grant_type=password`, true)
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY)
+        xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_ANON_KEY}`)
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(true)
+          } else {
+            resolve(false)
+          }
+        }
+        xhr.onerror = () => resolve(false)
+
+        xhr.send(
+          JSON.stringify({
+            email: user.email,
+            password: senha,
+          }),
+        )
       })
 
-      if (authError) {
-        toast.error('Senha incorreta.')
+      if (!isValidPassword) {
+        // 2. Tratamento Amigável de Erros de Login
+        toast.error('E-mail ou senha incorretos.')
         setSubmitting(false)
         return
       }
