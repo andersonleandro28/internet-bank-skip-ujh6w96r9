@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: data
+      user_metadata: data,
     })
 
     if (createError) {

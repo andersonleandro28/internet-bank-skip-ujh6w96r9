@@ -14,6 +14,15 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { useBank } from '@/hooks/use-bank'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
@@ -34,6 +43,7 @@ export default function Transfer() {
   const [amountStr, setAmountStr] = useState('0,00')
   const [saveFavorite, setSaveFavorite] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [favorites, setFavorites] = useState<any[]>([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [rates, setRates] = useState<{ PIX: any; TED: any }>({
@@ -59,7 +69,6 @@ export default function Transfer() {
 
       const newRates = { PIX: { p: 0, f: 0 }, TED: { p: 0, f: 0 } }
 
-      // 1. Obter taxas globais como fallback
       const { data: servicos } = await supabase.from('servicos').select('id, nome')
       const { data: taxasGlobais } = await supabase
         .from('taxas_servicos')
@@ -77,7 +86,6 @@ export default function Transfer() {
         if (tGlobal) newRates.TED = { p: Number(tGlobal.percentual), f: Number(tGlobal.valor_fixo) }
       }
 
-      // 2. Sobrescrever com taxas da cesta do cliente (se houver)
       const { data: cesta } = await supabase
         .from('cestas_clientes')
         .select('id')
@@ -116,34 +124,23 @@ export default function Transfer() {
     if (!user || !conta || amount <= 0 || total > conta.saldo) return
     setLoading(true)
 
-    const tipo_operacao = tab === 'PIX' ? 'pix_enviado' : 'transferencia'
-    const descricao =
-      tab === 'PIX'
-        ? `PIX para ${name} (${pixKey})`
-        : `TED para ${name} (Ag: ${tedAgency} CC: ${tedAccount})`
-
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
+      const tipoReq = tab === 'PIX' ? 'pix' : 'ted'
+      const metadados =
+        tab === 'PIX'
+          ? { chave_pix: pixKey, favorecido: name }
+          : { banco: tedBank, agencia: tedAgency, conta: tedAccount, favorecido: name }
 
-      const { data, error } = await supabase.functions.invoke('inserir-transacao', {
-        body: { tipo_operacao, valor: amount, descricao },
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      const { data, error } = await supabase.rpc('criar_requisicao_transferencia', {
+        p_user_id: user.id,
+        p_tipo: tipoReq,
+        p_valor: amount,
+        p_taxa: taxa,
+        p_metadados: metadados,
       })
 
       if (error) {
-        let msg = error.message
-        try {
-          const parsed = JSON.parse(error.message)
-          if (parsed.error) msg = parsed.error
-        } catch (e) {
-          // Mantém msg original caso o parse falhe
-        }
-        throw new Error(msg || 'Erro de comunicação com o servidor.')
-      }
-
-      if (data?.error) {
-        throw new Error(data.error)
+        throw new Error(error.message || 'Erro ao processar transferência.')
       }
 
       if (saveFavorite) {
@@ -165,7 +162,7 @@ export default function Transfer() {
         setFavorites(favs || [])
       }
 
-      toast.success('Transferência realizada com sucesso')
+      toast.success('Solicitação de transferência enviada para análise')
       await refreshData()
       setAmountStr('0,00')
       setName('')
@@ -174,10 +171,11 @@ export default function Transfer() {
       setTedAgency('')
       setTedAccount('')
       setSaveFavorite(false)
+      setIsConfirmOpen(false)
     } catch (err: any) {
       console.error('Erro na transferência:', err)
 
-      let msg = err.message || 'Erro ao realizar transferência'
+      let msg = err.message || 'Erro ao solicitar transferência'
       if (msg.includes('Saldo insuficiente')) {
         msg = 'Seu saldo é insuficiente para realizar esta transferência.'
       } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
@@ -358,17 +356,82 @@ export default function Transfer() {
         </div>
       </div>
 
-      <Button
-        onClick={handleTransfer}
-        disabled={!isFormValid || loading || total > (conta?.saldo || 0)}
-        className="mx-4 mb-6 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-base font-medium disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
-      >
-        {loading
-          ? 'Processando...'
-          : total > (conta?.saldo || 0)
-            ? 'Saldo Insuficiente'
-            : 'Transferir'}
-      </Button>
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogTrigger asChild>
+          <Button
+            disabled={!isFormValid || loading || total > (conta?.saldo || 0)}
+            className="mx-4 mb-6 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-base font-medium disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+          >
+            {loading
+              ? 'Processando...'
+              : total > (conta?.saldo || 0)
+                ? 'Saldo Insuficiente'
+                : 'Transferir'}
+          </Button>
+        </DialogTrigger>
+        <DialogContent aria-describedby="transfer-dialog-description">
+          <DialogHeader>
+            <DialogTitle>Confirmar Transferência</DialogTitle>
+            <DialogDescription id="transfer-dialog-description">
+              Revise os dados da sua transferência. Ela será enviada para análise e aprovação da
+              administração.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Beneficiário</span>
+              <span className="font-medium text-gray-900 text-right">{name}</span>
+            </div>
+
+            {tab === 'PIX' ? (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Chave PIX</span>
+                <span className="font-medium text-gray-900 text-right">{pixKey}</span>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Dados Bancários</span>
+                <span className="font-medium text-gray-900 text-right">
+                  Bco: {tedBank} | Ag: {tedAgency} | CC: {tedAccount}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Valor a enviar</span>
+              <span className="font-medium text-gray-900">{formatCurrency(amount)}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Taxa cobrada</span>
+              <span className="font-medium text-red-500">{formatCurrency(taxa)}</span>
+            </div>
+
+            <div className="flex justify-between items-center font-bold border-t pt-3 mt-2">
+              <span className="text-gray-800">Total debitado</span>
+              <span className="text-primary text-base">{formatCurrency(total)}</span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmOpen(false)}
+              className="w-full sm:w-auto h-11"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleTransfer}
+              disabled={loading}
+              className="w-full sm:w-auto h-11 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {loading ? 'Enviando...' : 'Confirmar Transferência'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
