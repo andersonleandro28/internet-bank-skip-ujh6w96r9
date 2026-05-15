@@ -448,30 +448,4 @@ export default function Clientes() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Valor a adicionar (R$)</label>
-              <Input
-                type="number"
-                placeholder="Ex: 100.00"
-                value={depositValue}
-                onChange={(e) => setDepositValue(e.target.value)}
-                min="0.01"
-                step="0.01"
-              />
-            </div>
-          </div>
-          <SheetFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDepositSheetOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleDeposit} disabled={isSubmitting || !depositValue}>
-              {isSubmitting ? 'Processando...' : 'Confirmar'}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-    </div>
-  )
-}
+      
