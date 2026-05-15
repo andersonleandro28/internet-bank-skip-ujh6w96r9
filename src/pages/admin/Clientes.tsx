@@ -60,7 +60,7 @@ export default function Clientes() {
   const [statusFilter, setStatusFilter] = useState('todos')
   const [dateFilter, setDateFilter] = useState('todos')
 
-  const { user } = useAuth()
+  const { user, resetPasswordForEmail } = useAuth()
   const { toast } = useToast()
 
   const [selectedClient, setSelectedClient] = useState<any>(null)
@@ -163,12 +163,13 @@ export default function Clientes() {
 
   const handleResetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      const { error } = await resetPasswordForEmail(email)
       if (error) {
         if (
           error.status === 429 ||
           error.message?.includes('rate limit') ||
-          error.code === 'over_email_send_rate_limit'
+          error.code === 'over_email_send_rate_limit' ||
+          error.message?.includes('Muitos pedidos')
         ) {
           toast({
             title: 'Limite excedido',
@@ -179,16 +180,6 @@ export default function Clientes() {
           return
         }
 
-        if (
-          error.status === 500 ||
-          error.message?.includes('Error sending recovery email') ||
-          error.message?.includes('unexpected_failure')
-        ) {
-          console.warn('Ignorando erro de SMTP no reset de senha:', error.message)
-          toast({ title: 'Sucesso', description: 'Procedimento de redefinição de senha iniciado.' })
-          return
-        }
-
         throw error
       }
       toast({ title: 'Sucesso', description: 'Procedimento de redefinição de senha iniciado.' })
@@ -196,7 +187,8 @@ export default function Clientes() {
       if (
         error?.status === 429 ||
         error?.message?.includes('rate limit') ||
-        error?.code === 'over_email_send_rate_limit'
+        error?.code === 'over_email_send_rate_limit' ||
+        error?.message?.includes('Muitos pedidos')
       ) {
         toast({
           title: 'Limite excedido',
@@ -204,17 +196,10 @@ export default function Clientes() {
             'Muitos e-mails de recuperação enviados. Aguarde alguns instantes antes de tentar novamente.',
           variant: 'destructive',
         })
-      } else if (
-        error?.status === 500 ||
-        error?.message?.includes('Error sending recovery email') ||
-        error?.message?.includes('unexpected_failure')
-      ) {
-        console.warn('Ignorando erro de SMTP no reset de senha:', error?.message)
-        toast({ title: 'Sucesso', description: 'Procedimento de redefinição de senha iniciado.' })
       } else {
         toast({
           title: 'Erro',
-          description: 'Falha ao iniciar procedimento de redefinição.',
+          description: error?.message || 'Falha ao iniciar procedimento de redefinição.',
           variant: 'destructive',
         })
       }
