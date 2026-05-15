@@ -95,17 +95,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: { email, password, data: options?.data },
       })
 
-      if (funcError || funcData?.error) {
+      if (funcError) {
         console.warn(
-          '[Supabase Auth Diagnostic] Erro na edge function, usando fetch customizado:',
-          funcError?.message || funcData?.error,
+          '[Supabase Auth Diagnostic] Erro de rede na edge function, usando fetch customizado:',
+          funcError.message,
         )
         return await customSignUp(email, password, options)
+      }
+
+      if (funcData?.error) {
+        const errorMsgStr = (funcData.error || '').toLowerCase()
+        if (
+          errorMsgStr.includes('already been registered') ||
+          errorMsgStr.includes('already exists')
+        ) {
+          return {
+            data: null,
+            error: {
+              message: 'Este e-mail já está cadastrado. Por favor, faça login.',
+              status: 400,
+            },
+          }
+        }
+
+        return { data: null, error: { message: funcData.error, status: 400 } }
       }
 
       return { data: { user: funcData?.data?.user, session: null }, error: null }
     } catch (err: any) {
       console.warn('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err.message || err)
+      const errStr = typeof err === 'string' ? err : JSON.stringify(err) + (err?.message || '')
+      if (
+        errStr.toLowerCase().includes('already been registered') ||
+        errStr.toLowerCase().includes('already exists')
+      ) {
+        return {
+          data: null,
+          error: { message: 'Este e-mail já está cadastrado. Por favor, faça login.', status: 400 },
+        }
+      }
       return await customSignUp(email, password, options)
     }
   }
