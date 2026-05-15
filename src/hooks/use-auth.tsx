@@ -50,24 +50,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (funcError) {
         console.warn(
-          '[Supabase Auth Diagnostic] Erro ao invocar signup-admin:',
+          '[Supabase Auth Diagnostic] Erro ao invocar signup-admin, usando fallback:',
           funcError.message || funcError,
         )
-        return { error: funcError }
+        const { data, error } = await supabase.auth.signUp({ email, password, options })
+        return { data, error }
       }
 
       if (funcData?.error) {
         console.warn(
-          '[Supabase Auth Diagnostic] Erro retornado pela edge function:',
+          '[Supabase Auth Diagnostic] Erro retornado pela edge function, usando fallback:',
           funcData.error,
         )
-        return { error: new Error(funcData.error) }
+        const { data, error } = await supabase.auth.signUp({ email, password, options })
+        return { data, error }
       }
 
       return { data: { user: funcData?.data?.user, session: null }, error: null }
     } catch (err: any) {
-      console.warn('[Supabase Auth Diagnostic] Exceção inesperada no signUp:', err.message || err)
-      return { error: err }
+      console.warn(
+        '[Supabase Auth Diagnostic] Exceção inesperada no signUp, usando fallback:',
+        err.message || err,
+      )
+      const { data, error } = await supabase.auth.signUp({ email, password, options })
+      return { data, error }
     }
   }
 
