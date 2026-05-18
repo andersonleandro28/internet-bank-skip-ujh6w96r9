@@ -1,6 +1,6 @@
 {
   "_versions": {
-    "enviar_email_confirmacao_cadastro": 15,
+    "enviar_email_confirmacao_cadastro": 16,
     "enviar_email_requisicao_processada": 9,
     "enviar_email_deposito_creditado": 9,
     "enviar_email_alerta_saldo_baixo": 9,
