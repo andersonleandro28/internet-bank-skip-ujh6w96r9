@@ -200,4 +200,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const resetPasswordForEmail = async (email: string) => {
-    c
+    const { data, error } = await supabase.functions.invoke('enviar-reset-senha', {
+      body: { email },
+    })
+    if (error) return { error }
+    if (data?.error) return { error: new Error(data.error) }
+    return { error: null }
+  }
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error }
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        signUp,
+        signIn,
+        signOut,
+        resetPasswordForEmail,
+        updatePassword,
+        loading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
