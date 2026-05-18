@@ -4,15 +4,11 @@ import { sendEmail, baseEmailHtml, getUserName, supabase } from '../_shared/emai
 Deno.serve(async (req) => {
   try {
     const { record, type, table } = await req.json()
-    if (
-      !record ||
-      type !== 'INSERT' ||
-      !['usuarios', 'usuarios_pf', 'usuarios_pj'].includes(table)
-    ) {
+    if (!record || type !== 'INSERT' || !['usuarios', 'usuarios_pf', 'usuarios_pj'].includes(table)) {
       return new Response('Ignorado', { status: 200 })
     }
 
-    const user_id = table === 'usuarios' ? record.id : record.user_id
+    const user_id = table === 'usuarios' ? record.id : record.user_id;
 
     // Busca dados do usuário (email, tipo) caso a trigger tenha vindo de pf/pj
     const { data: usuarioData, error: userError } = await supabase
@@ -60,9 +56,7 @@ Deno.serve(async (req) => {
     })
 
     if (!success) {
-      console.error(
-        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
-      )
+      console.error(`[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`)
     } else {
       console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
     }
