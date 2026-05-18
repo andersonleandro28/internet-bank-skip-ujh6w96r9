@@ -1,0 +1,1 @@
+ALTER TABLE public.boletos_pendentes ADD COLUMN IF NOT EXISTS valor NUMERIC NOT NULL DEFAULT 0;
