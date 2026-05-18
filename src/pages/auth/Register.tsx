@@ -226,31 +226,49 @@ export default function Register() {
       }
 
       if (userId) {
-        const { error: userError } = await supabase.from('usuarios').insert({
-          id: userId,
-          email: email,
-          tipo: tipo as 'PF' | 'PJ',
-          status: 'pendente',
-          role: 'cliente',
-        })
+        // Verifica se usuário já existe para não dar erro 409
+        const { data: usuarioExistente } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle()
 
-        if (userError) {
-          if (userError.code === '23503') {
-            throw new Error('Este e-mail já está cadastrado. Por favor, faça login.')
-          }
-          if (userError.code !== '23505') throw userError
+        if (!usuarioExistente) {
+          const { error: userError } = await supabase.from('usuarios').insert({
+            id: userId,
+            email: email,
+            tipo: tipo as 'PF' | 'PJ',
+            status: 'pendente',
+            role: 'cliente',
+          })
+          if (userError && userError.code !== '23505') throw userError
         }
 
-        const { error: contaError } = await supabase.from('contas').insert({
-          user_id: userId,
-          saldo: 0,
-          saldo_bloqueado: 0,
-        })
-        if (contaError && contaError.code !== '23505') throw contaError
+        const { data: contaExistente } = await supabase
+          .from('contas')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle()
+        if (!contaExistente) {
+          const { error: contaError } = await supabase.from('contas').insert({
+            user_id: userId,
+            saldo: 0,
+            saldo_bloqueado: 0,
+          })
+          if (contaError && contaError.code !== '23505') throw contaError
+        }
 
         let fileUrl = ''
 
         if (tipo === 'PF') {
+          // Check if CPF already exists to avoid 409
+          const { data: pfExistente } = await supabase
+            .from('usuarios_pf')
+            .select('id')
+            .eq('cpf', cpf)
+            .maybeSingle()
+          if (pfExistente) throw new Error('Este CPF já está em uso.')
+
           if (selfie) fileUrl = await uploadFile(selfie, userId)
           let docIdentidadeUrl = ''
           if (documentoIdentidade) docIdentidadeUrl = await uploadFile(documentoIdentidade, userId)
@@ -269,6 +287,14 @@ export default function Register() {
             throw pfError
           }
         } else if (tipo === 'PJ') {
+          // Check if CNPJ already exists to avoid 409
+          const { data: pjExistente } = await supabase
+            .from('usuarios_pj')
+            .select('id')
+            .eq('cnpj', cnpj)
+            .maybeSingle()
+          if (pjExistente) throw new Error('Este CNPJ já está em uso.')
+
           if (documentos) fileUrl = await uploadFile(documentos, userId)
 
           let respSelfieUrl = ''
