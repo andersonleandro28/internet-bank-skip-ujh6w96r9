@@ -44,7 +44,9 @@ Deno.serve(async (req) => {
     })
 
     if (!success) {
-      console.error(`[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`)
+      console.error(
+        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
+      )
     } else {
       console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
     }

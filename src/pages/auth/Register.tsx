@@ -226,37 +226,9 @@ export default function Register() {
       }
 
       if (userId) {
-        // Verifica se usuário já existe para não dar erro 409
-        const { data: usuarioExistente } = await supabase
-          .from('usuarios')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle()
-
-        if (!usuarioExistente) {
-          const { error: userError } = await supabase.from('usuarios').insert({
-            id: userId,
-            email: email,
-            tipo: tipo as 'PF' | 'PJ',
-            status: 'pendente',
-            role: 'cliente',
-          })
-          if (userError && userError.code !== '23505') throw userError
-        }
-
-        const { data: contaExistente } = await supabase
-          .from('contas')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle()
-        if (!contaExistente) {
-          const { error: contaError } = await supabase.from('contas').insert({
-            user_id: userId,
-            saldo: 0,
-            saldo_bloqueado: 0,
-          })
-          if (contaError && contaError.code !== '23505') throw contaError
-        }
+        // As tabelas 'usuarios' e 'contas' são populadas automaticamente pelo trigger
+        // 'handle_new_user' no banco de dados quando o usuário é criado no auth.users.
+        // Não é necessário tentar inseri-las aqui, evitando assim o erro 409 (Conflict).
 
         let fileUrl = ''
 
