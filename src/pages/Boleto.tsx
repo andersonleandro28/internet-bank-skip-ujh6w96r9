@@ -267,42 +267,78 @@ export default function BoletoPage() {
 
   // Camera Logic
   useEffect(() => {
-    if (!isCameraOpen) return
+    if (!isCameraOpen) {
+      setCameraError(null)
+      return
+    }
 
     let html5QrcodeScanner: any = null
+    let isComponentMounted = true
 
-    const initScanner = () => {
+    const initScanner = async () => {
+      if (!isComponentMounted) return
+
       if (!(window as any).Html5Qrcode) {
         setTimeout(initScanner, 100)
         return
       }
 
       try {
-        html5QrcodeScanner = new (window as any).Html5Qrcode('qr-reader')
-        html5QrcodeScanner
-          .start(
-            { facingMode: 'environment' },
-            {
-              fps: 10,
-              qrbox: { width: 300, height: 100 },
-            },
-            (decodedText: string) => {
-              if (decodedText.length >= 40) {
-                handleScanSuccess(decodedText)
-                if (html5QrcodeScanner) {
-                  html5QrcodeScanner.stop().catch(console.error)
-                }
+        const Html5Qrcode = (window as any).Html5Qrcode
+
+        // Verificar permissões e listar câmeras
+        let cameras = []
+        try {
+          cameras = await Html5Qrcode.getCameras()
+        } catch (camErr: any) {
+          if (camErr?.message?.includes('Permission') || camErr?.name === 'NotAllowedError') {
+            setCameraError(
+              'Permissão da câmera negada. Libere o acesso nas configurações do navegador.',
+            )
+            return
+          }
+        }
+
+        if (!cameras || cameras.length === 0) {
+          setCameraError('Nenhuma câmera encontrada no dispositivo.')
+          return
+        }
+
+        html5QrcodeScanner = new Html5Qrcode('qr-reader')
+
+        await html5QrcodeScanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
+              // Área dinâmica ajustada para códigos de barras horizontais
+              return {
+                width: Math.floor(viewfinderWidth * 0.9),
+                height: Math.floor(viewfinderHeight * 0.35),
               }
             },
-            (errorMessage: string) => {
-              // ignore parse errors
-            },
-          )
-          .catch((err: any) => {
-            setCameraError('Não foi possível acessar a câmera: ' + err?.message)
-          })
+            aspectRatio: 1.0,
+          },
+          (decodedText: string) => {
+            if (decodedText.length >= 40) {
+              handleScanSuccess(decodedText)
+              if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(console.error)
+              }
+            }
+          },
+          (errorMessage: string) => {
+            // ignorar erros de leitura quadro a quadro
+          },
+        )
       } catch (err: any) {
-        setCameraError('Erro ao iniciar o leitor: ' + err?.message)
+        if (err?.name === 'NotAllowedError' || err?.message?.includes('Permission')) {
+          setCameraError(
+            'Acesso à câmera negado. Por favor, permita o acesso nas configurações do seu navegador.',
+          )
+        } else {
+          setCameraError('Erro ao iniciar a câmera: ' + err?.message)
+        }
       }
     }
 
@@ -319,11 +355,12 @@ export default function BoletoPage() {
     }
 
     return () => {
+      isComponentMounted = false
       if (html5QrcodeScanner) {
         try {
           html5QrcodeScanner.stop().catch(console.error)
         } catch {
-          /* intentionally ignored */
+          /* erros no stop podem ser ignorados */
         }
       }
     }
