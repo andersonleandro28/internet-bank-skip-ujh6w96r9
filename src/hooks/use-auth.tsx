@@ -42,20 +42,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     supabase.auth
       .getSession()
-      .then(({ data: { session }, error }) => {
+      .then(async ({ data: { session }, error }) => {
         if (error) {
           console.warn('[Supabase Auth Diagnostic] Erro na sessão:', error.message)
           if (error.message.toLowerCase().includes('refresh token')) {
-            supabase.auth.signOut().catch(() => {})
+            await supabase.auth.signOut().catch(() => {})
+            localStorage.clear()
+            setSession(null)
+            setUser(null)
           }
+        } else {
+          setSession(session)
+          setUser(session?.user ?? null)
         }
-        setSession(session)
-        setUser(session?.user ?? null)
         setLoading(false)
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.warn('[Supabase Auth Diagnostic] Exceção na sessão:', err)
-        supabase.auth.signOut().catch(() => {})
+        await supabase.auth.signOut().catch(() => {})
+        localStorage.clear()
         setSession(null)
         setUser(null)
         setLoading(false)

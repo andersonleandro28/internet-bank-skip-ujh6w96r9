@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/lib/supabase/client'
 import logoAclop from '@/assets/aclop-bank-logo-998a8.png'
 
 export default function Login() {
@@ -39,7 +40,21 @@ export default function Login() {
         setCooldownTime(60 - elapsed)
       }
     }
-  }, [])
+
+    // Tratamento e limpeza de sessão inválida no carregamento da tela de login
+    supabase.auth.getSession().then(({ error }) => {
+      if (error && error.message.toLowerCase().includes('refresh token')) {
+        supabase.auth.signOut()
+        localStorage.clear()
+        sessionStorage.clear()
+        toast({
+          title: 'Sessão Expirada',
+          description: 'Sua sessão expirou de forma inesperada. Por favor, faça login novamente.',
+          variant: 'destructive',
+        })
+      }
+    })
+  }, [toast])
 
   useEffect(() => {
     if (cooldownTime > 0) {

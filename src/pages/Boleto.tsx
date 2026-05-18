@@ -175,7 +175,7 @@ export default function BoletoPage() {
         if ('BarcodeDetector' in window) {
           // @ts-expect-error
           const barcodeDetector = new window.BarcodeDetector({
-            formats: ['code_128', 'itf', 'ean_13'],
+            formats: ['code_128', 'itf', 'ean_13', 'qr_code', 'pdf417'],
           })
           const detectCode = async () => {
             if (
@@ -197,10 +197,10 @@ export default function BoletoPage() {
           }
           detectCode()
         } else {
-          // Fallback simulation for unsupported browsers (iOS)
+          // Alternative fallback for unsupported browsers (iOS/Safari)
           timeoutId = setTimeout(() => {
             handleScanSuccess('826000000016500012345673890123456786901234567898')
-            toast.success('Leitura otimizada concluída!')
+            toast.success('Leitura simulada (Navegador sem suporte nativo a BarcodeDetector)')
           }, 3500)
         }
       } catch (err) {
@@ -234,7 +234,7 @@ export default function BoletoPage() {
     try {
       const { error: reqError } = await supabase.rpc('criar_requisicao_transferencia', {
         p_user_id: user.id,
-        p_tipo: 'boleto_pago',
+        p_tipo: 'boleto',
         p_valor: valorBoleto,
         p_taxa: 0,
         p_metadados: { codigo_barras: codigo.replace(/\D/g, '') },
