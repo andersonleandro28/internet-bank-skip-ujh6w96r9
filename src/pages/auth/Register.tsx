@@ -165,6 +165,7 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     setErrorMsg('')
 
@@ -245,14 +246,17 @@ export default function Register() {
           let docIdentidadeUrl = ''
           if (documentoIdentidade) docIdentidadeUrl = await uploadFile(documentoIdentidade, userId)
 
-          const { error: pfError } = await (supabase as any).from('usuarios_pf').insert({
-            user_id: userId,
-            cpf,
-            nome,
-            data_nascimento: dataNascimento || null,
-            selfie_url: fileUrl,
-            documento_identidade_url: docIdentidadeUrl,
-          })
+          const { error: pfError } = await (supabase as any).from('usuarios_pf').upsert(
+            {
+              user_id: userId,
+              cpf,
+              nome,
+              data_nascimento: dataNascimento || null,
+              selfie_url: fileUrl,
+              documento_identidade_url: docIdentidadeUrl,
+            },
+            { onConflict: 'cpf' },
+          )
           if (pfError) {
             if (pfError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
             if (pfError.code === '23505') throw new Error('Este CPF já está em uso.')
@@ -275,17 +279,20 @@ export default function Register() {
           let respDocUrl = ''
           if (respDocumento) respDocUrl = await uploadFile(respDocumento, userId)
 
-          const { error: pjError } = await (supabase as any).from('usuarios_pj').insert({
-            user_id: userId,
-            cnpj,
-            razao_social: razaoSocial,
-            documentos_url: fileUrl,
-            resp_nome: respNome,
-            resp_cpf: respCpf,
-            resp_data_nascimento: respDataNascimento || null,
-            resp_selfie_url: respSelfieUrl,
-            resp_documento_url: respDocUrl,
-          })
+          const { error: pjError } = await (supabase as any).from('usuarios_pj').upsert(
+            {
+              user_id: userId,
+              cnpj,
+              razao_social: razaoSocial,
+              documentos_url: fileUrl,
+              resp_nome: respNome,
+              resp_cpf: respCpf,
+              resp_data_nascimento: respDataNascimento || null,
+              resp_selfie_url: respSelfieUrl,
+              resp_documento_url: respDocUrl,
+            },
+            { onConflict: 'cnpj' },
+          )
           if (pjError) {
             if (pjError.code === '23503') throw new Error('Este e-mail já está cadastrado.')
             if (pjError.code === '23505') throw new Error('Este CNPJ já está em uso.')

@@ -1,20 +1,36 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { sendEmail, baseEmailHtml, getUserName, sleep } from '../_shared/email.ts'
+import { sendEmail, baseEmailHtml, getUserName, supabase } from '../_shared/email.ts'
 
 Deno.serve(async (req) => {
   try {
     const { record, type, table } = await req.json()
-    if (!record || table !== 'usuarios' || type !== 'INSERT') {
+    if (
+      !record ||
+      type !== 'INSERT' ||
+      !['usuarios', 'usuarios_pf', 'usuarios_pj'].includes(table)
+    ) {
       return new Response('Ignorado', { status: 200 })
     }
 
-    if (record.status !== 'pendente') {
-      return new Response('Ignorado. Status não é pendente.', { status: 200 })
+    const user_id = table === 'usuarios' ? record.id : record.user_id
+
+    // Busca dados do usuário (email, tipo) caso a trigger tenha vindo de pf/pj
+    const { data: usuarioData, error: userError } = await supabase
+      .from('usuarios')
+      .select('email, tipo, status')
+      .eq('id', user_id)
+      .single()
+
+    if (userError || !usuarioData) {
+      return new Response('Usuário não encontrado', { status: 404 })
     }
 
-    const user_id = record.id
-    const email = record.email
-    const tipoUser = record.tipo || 'PF'
+    if (usuarioData.status !== 'pendente') {
+      return new Response('Ignorado. Status do usuário não é pendente.', { status: 200 })
+    }
+
+    const email = usuarioData.email
+    const tipoUser = usuarioData.tipo || 'PF'
 
     const nome = await getUserName(user_id, tipoUser)
     const tipoFormatado = tipoUser === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'
@@ -44,7 +60,9 @@ Deno.serve(async (req) => {
     })
 
     if (!success) {
-      console.error(`[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`)
+      console.error(
+        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
+      )
     } else {
       console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
     }
