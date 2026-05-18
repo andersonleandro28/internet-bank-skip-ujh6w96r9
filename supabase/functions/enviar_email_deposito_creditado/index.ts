@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       </div>
 
       <div style="text-align: center; margin-top: 32px; margin-bottom: 16px;">
-        <a href="https://carteiraseaconnection.goskip.app/extrato" style="background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">Ver extrato</a>
+        <a href="https://www.aclop.com.br/extrato" style="background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">Ver extrato</a>
       </div>
     `
 

@@ -1,10 +1,10 @@
 {
   "_versions": {
-    "enviar_email_confirmacao_cadastro": 14,
-    "enviar_email_requisicao_processada": 8,
-    "enviar_email_deposito_creditado": 8,
-    "enviar_email_alerta_saldo_baixo": 8,
-    "enviar_relatorio_mensal": 8,
+    "enviar_email_confirmacao_cadastro": 15,
+    "enviar_email_requisicao_processada": 9,
+    "enviar_email_deposito_creditado": 9,
+    "enviar_email_alerta_saldo_baixo": 9,
+    "enviar_relatorio_mensal": 9,
     "retry_emails_pendentes": 9,
     "testar_resend": 9,
     "testar_resend_detalhado": 9,

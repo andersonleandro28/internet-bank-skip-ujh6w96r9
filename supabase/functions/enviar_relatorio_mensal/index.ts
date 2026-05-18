@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
           </table>
 
           <div style="text-align: center; margin-top: 32px;">
-            <a href="https://carteiraseaconnection.goskip.app/extrato" style="display: inline-block; background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Ver extrato completo</a>
+            <a href="https://www.aclop.com.br/extrato" style="display: inline-block; background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Ver extrato completo</a>
           </div>
         `
 

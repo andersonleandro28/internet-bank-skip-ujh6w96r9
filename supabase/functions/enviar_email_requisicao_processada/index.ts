@@ -37,8 +37,8 @@ Deno.serve(async (req) => {
       : `Sua requisição de R$ ${valorFormatado} foi reprovada`
 
     const linkAcao = isAprovado
-      ? 'https://carteiraseaconnection.goskip.app/extrato'
-      : 'https://carteiraseaconnection.goskip.app/transferir'
+      ? 'https://www.aclop.com.br/extrato'
+      : 'https://www.aclop.com.br/transferir'
     const textoBotao = isAprovado ? 'Ver extrato' : 'Tentar novamente'
     const mensagemPrincipal = isAprovado
       ? 'Sua requisição foi aprovada com sucesso!'

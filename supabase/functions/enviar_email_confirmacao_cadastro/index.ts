@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         Recebemos seu cadastro como <strong>${tipoFormatado}</strong>. Estamos analisando seus documentos e em breve você receberá uma resposta.
       </p>
       <div style="text-align: center; margin-top: 32px; margin-bottom: 32px;">
-        <a href="https://carteiraseaconnection.goskip.app/" style="background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">Acompanhar status</a>
+        <a href="https://www.aclop.com.br/" style="background-color: #7fff00; color: #1a4d2e; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">Acompanhar status</a>
       </div>
       <p style="font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 0;">
         Se você não realizou este cadastro, por favor ignore este email.
@@ -44,7 +44,9 @@ Deno.serve(async (req) => {
     })
 
     if (!success) {
-      console.error(`[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`)
+      console.error(
+        `[Edge Function] Falha no envio do email de boas-vindas para: ${email}. Verifique a tabela emails_pendentes e emails_log.`,
+      )
     } else {
       console.log(`[Edge Function] Email de boas-vindas enviado com sucesso para: ${email}.`)
     }
