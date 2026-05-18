@@ -230,6 +230,25 @@ export function RequisicoesPendentes() {
           metadados: r.metadados,
         }
       })
+
+      // Ordenação: Pendentes de boleto por vencimento mais próximo
+      formatados.sort((a, b) => {
+        if (a.status === 'pendente' && b.status === 'pendente') {
+          if (a.tipo.includes('boleto') && b.tipo.includes('boleto')) {
+            const vA = a.metadados?.vencimento
+              ? new Date(a.metadados.vencimento).getTime()
+              : Infinity
+            const vB = b.metadados?.vencimento
+              ? new Date(b.metadados.vencimento).getTime()
+              : Infinity
+            return vA - vB
+          }
+          if (a.tipo.includes('boleto')) return -1
+          if (b.tipo.includes('boleto')) return 1
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+
       setRequisicoes(formatados)
     } catch (error) {
       console.error(error)
@@ -460,9 +479,8 @@ export function RequisicoesPendentes() {
                                 {req.metadados?.vencimento
                                   ? (() => {
                                       const venc = new Date(req.metadados.vencimento)
-                                      const hoje = new Date()
-                                      venc.setUTCHours(0, 0, 0, 0)
-                                      hoje.setHours(0, 0, 0, 0)
+                                      const hojeStr = new Date().toISOString().split('T')[0]
+                                      const hoje = new Date(hojeStr)
 
                                       const isVencido = venc.getTime() < hoje.getTime()
                                       const isHoje = venc.getTime() === hoje.getTime()

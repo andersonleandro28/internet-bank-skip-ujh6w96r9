@@ -27,7 +27,7 @@ export default function BoletoPage() {
   const [saving, setSaving] = useState(false)
   const [isValid, setIsValid] = useState<boolean | null>(null)
   const [valorBoleto, setValorBoleto] = useState<number>(0)
-  const [vencimentoBoleto, setVencimentoBoleto] = useState<string | null>(null)
+  const [vencimentoBoleto, setVencimentoBoleto] = useState<string>('')
 
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -201,11 +201,15 @@ export default function BoletoPage() {
       baseDate.setUTCDate(baseDate.getUTCDate() + fator)
 
       const now = new Date()
-      if (now.getFullYear() >= 2025 && baseDate.getFullYear() < 2015) {
-        baseDate.setUTCDate(baseDate.getUTCDate() + 10000)
+      const diffDays = (now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)
+
+      // Ciclo FEBRABAN: fator de 1000 a 9999 = 9000 dias.
+      if (diffDays > 3000) {
+        const cycles = Math.ceil((diffDays - 3000) / 9000)
+        baseDate.setUTCDate(baseDate.getUTCDate() + cycles * 9000)
       }
 
-      return baseDate.toISOString()
+      return baseDate.toISOString().split('T')[0]
     }
 
     // Tenta extrair de boletos de Arrecadação (Convênio/Consumo) de 48 dígitos ou 44 (código de barras)
@@ -224,7 +228,7 @@ export default function BoletoPage() {
       const day = parseInt(dateStr.substring(6, 8), 10)
 
       if (year >= 2020 && year <= 2050 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-        return new Date(Date.UTC(year, month - 1, day)).toISOString()
+        return new Date(Date.UTC(year, month - 1, day)).toISOString().split('T')[0]
       }
     }
 
@@ -249,10 +253,11 @@ export default function BoletoPage() {
       setIsValid(valid)
       if (valid) {
         setValorBoleto(extractValue(digits))
-        setVencimentoBoleto(extractDueDate(digits))
+        const dt = extractDueDate(digits)
+        setVencimentoBoleto(dt || '')
       } else {
         setValorBoleto(0)
-        setVencimentoBoleto(null)
+        setVencimentoBoleto('')
       }
       setLoading(false)
     }, 400)
@@ -264,63 +269,63 @@ export default function BoletoPage() {
   useEffect(() => {
     if (!isCameraOpen) return
 
-    let stream: MediaStream | null = null
-    let animationFrameId: number
-    let timeoutId: NodeJS.Timeout
+    let html5QrcodeScanner: any = null
 
-    const startCamera = async () => {
-      setCameraError(null)
+    const initScanner = () => {
+      if (!(window as any).Html5Qrcode) {
+        setTimeout(initScanner, 100)
+        return
+      }
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play()
-        }
-
-        if ('BarcodeDetector' in window) {
-          // @ts-expect-error
-          const barcodeDetector = new window.BarcodeDetector({
-            formats: ['code_128', 'itf', 'ean_13', 'qr_code', 'pdf417'],
-          })
-          const detectCode = async () => {
-            if (
-              videoRef.current &&
-              videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA
-            ) {
-              try {
-                const barcodes = await barcodeDetector.detect(videoRef.current)
-                if (barcodes.length > 0) {
-                  const code = barcodes[0].rawValue
-                  handleScanSuccess(code)
-                  return // Stop loop
+        html5QrcodeScanner = new (window as any).Html5Qrcode('qr-reader')
+        html5QrcodeScanner
+          .start(
+            { facingMode: 'environment' },
+            {
+              fps: 10,
+              qrbox: { width: 300, height: 100 },
+            },
+            (decodedText: string) => {
+              if (decodedText.length >= 40) {
+                handleScanSuccess(decodedText)
+                if (html5QrcodeScanner) {
+                  html5QrcodeScanner.stop().catch(console.error)
                 }
-              } catch (err) {
-                console.error(err)
               }
-            }
-            animationFrameId = requestAnimationFrame(detectCode)
-          }
-          detectCode()
-        } else {
-          setCameraError(
-            'Seu navegador (ex: Safari/iOS) ou dispositivo não suporta leitura de código de barras automática no momento. Por favor, digite o código manualmente.',
+            },
+            (errorMessage: string) => {
+              // ignore parse errors
+            },
           )
-          if (stream) {
-            stream.getTracks().forEach((track) => track.stop())
-            stream = null
-          }
-        }
-      } catch (err) {
-        setCameraError('Não foi possível acessar a câmera. Verifique as permissões do navegador.')
+          .catch((err: any) => {
+            setCameraError('Não foi possível acessar a câmera: ' + err?.message)
+          })
+      } catch (err: any) {
+        setCameraError('Erro ao iniciar o leitor: ' + err?.message)
       }
     }
 
-    startCamera()
+    let script = document.getElementById('html5-qrcode-script') as HTMLScriptElement
+    if (!script) {
+      script = document.createElement('script')
+      script.id = 'html5-qrcode-script'
+      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
+      script.async = true
+      script.onload = initScanner
+      document.head.appendChild(script)
+    } else {
+      initScanner()
+    }
 
     return () => {
-      if (stream) stream.getTracks().forEach((track) => track.stop())
-      if (animationFrameId) cancelAnimationFrame(animationFrameId)
-      if (timeoutId) clearTimeout(timeoutId)
+      if (html5QrcodeScanner) {
+        try {
+          html5QrcodeScanner.stop().catch(console.error)
+        } catch {
+          /* intentionally ignored */
+        }
+      }
     }
   }, [isCameraOpen])
 
@@ -469,16 +474,15 @@ export default function BoletoPage() {
                       R$ {valorBoleto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  {vencimentoBoleto && (
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                      <span className="text-slate-500 text-sm font-medium">Vencimento:</span>
-                      <span className="text-lg font-bold text-slate-800">
-                        {new Date(vencimentoBoleto).toLocaleDateString('pt-BR', {
-                          timeZone: 'UTC',
-                        })}
-                      </span>
-                    </div>
-                  )}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center gap-4">
+                    <span className="text-slate-500 text-sm font-medium">Vencimento:</span>
+                    <Input
+                      type="date"
+                      value={vencimentoBoleto}
+                      onChange={(e) => setVencimentoBoleto(e.target.value)}
+                      className="w-auto h-10 bg-white text-slate-800 font-bold shadow-sm"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -515,9 +519,9 @@ export default function BoletoPage() {
               Posicione a linha do código de barras no centro da tela.
             </DialogDescription>
           </DialogHeader>
-          <div className="relative aspect-square sm:aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner">
+          <div className="relative bg-black rounded-xl overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner min-h-[300px]">
             {cameraError ? (
-              <div className="text-center p-6 text-slate-300">
+              <div className="text-center p-6 text-slate-300 z-10 relative">
                 <p>{cameraError}</p>
                 <Button
                   variant="outline"
@@ -528,19 +532,7 @@ export default function BoletoPage() {
                 </Button>
               </div>
             ) : (
-              <>
-                <video
-                  ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  playsInline
-                  muted
-                />
-                <div className="absolute inset-x-8 top-1/2 h-0.5 bg-red-500 shadow-[0_0_12px_3px_rgba(239,68,68,0.8)] animate-pulse -translate-y-1/2 rounded-full" />
-                <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none rounded-xl" />
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 px-4 py-1.5 rounded-full text-white/90 text-xs tracking-wide backdrop-blur-sm">
-                  Lendo...
-                </div>
-              </>
+              <div id="qr-reader" className="w-full h-full min-h-[300px]" />
             )}
           </div>
         </DialogContent>
