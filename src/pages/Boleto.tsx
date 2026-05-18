@@ -208,6 +208,26 @@ export default function BoletoPage() {
       return baseDate.toISOString()
     }
 
+    // Tenta extrair de boletos de Arrecadação (Convênio/Consumo) de 48 dígitos ou 44 (código de barras)
+    if (digits.length === 48 || (digits.length === 44 && digits[0] === '8')) {
+      const barcode =
+        digits.length === 48
+          ? digits.substring(0, 11) +
+            digits.substring(12, 23) +
+            digits.substring(24, 35) +
+            digits.substring(36, 47)
+          : digits
+
+      const dateStr = barcode.substring(19, 27)
+      const year = parseInt(dateStr.substring(0, 4), 10)
+      const month = parseInt(dateStr.substring(4, 6), 10)
+      const day = parseInt(dateStr.substring(6, 8), 10)
+
+      if (year >= 2020 && year <= 2050 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        return new Date(Date.UTC(year, month - 1, day)).toISOString()
+      }
+    }
+
     return null
   }
 
@@ -283,7 +303,7 @@ export default function BoletoPage() {
           detectCode()
         } else {
           setCameraError(
-            'Câmera não suportada pelo seu dispositivo para leitura automática. Por favor, digite o código de barras manualmente.',
+            'Seu navegador (ex: Safari/iOS) ou dispositivo não suporta leitura de código de barras automática no momento. Por favor, digite o código manualmente.',
           )
           if (stream) {
             stream.getTracks().forEach((track) => track.stop())

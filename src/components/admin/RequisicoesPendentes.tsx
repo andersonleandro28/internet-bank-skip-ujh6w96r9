@@ -419,7 +419,14 @@ export function RequisicoesPendentes() {
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <div
+                          className={cn(
+                            'grid gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100',
+                            req.tipo.includes('boleto')
+                              ? 'grid-cols-2 sm:grid-cols-4'
+                              : 'grid-cols-2 sm:grid-cols-3',
+                          )}
+                        >
                           <div>
                             <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-medium">
                               Valor Original
@@ -444,6 +451,55 @@ export function RequisicoesPendentes() {
                               {formatCurrency(req.valor_total)}
                             </div>
                           </div>
+                          {req.tipo.includes('boleto') && (
+                            <div>
+                              <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-medium">
+                                Vencimento
+                              </div>
+                              <div className="font-medium text-slate-700">
+                                {req.metadados?.vencimento
+                                  ? (() => {
+                                      const venc = new Date(req.metadados.vencimento)
+                                      const hoje = new Date()
+                                      venc.setUTCHours(0, 0, 0, 0)
+                                      hoje.setHours(0, 0, 0, 0)
+
+                                      const isVencido = venc.getTime() < hoje.getTime()
+                                      const isHoje = venc.getTime() === hoje.getTime()
+
+                                      return (
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span
+                                            className={cn(
+                                              isVencido && 'text-red-500 font-bold',
+                                              isHoje && 'text-amber-600 font-bold',
+                                            )}
+                                          >
+                                            {venc.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                          </span>
+                                          {isVencido && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-red-500 border-red-200 bg-red-50 text-[9px] px-1 py-0 h-4"
+                                            >
+                                              Vencido
+                                            </Badge>
+                                          )}
+                                          {isHoje && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-amber-600 border-amber-200 bg-amber-50 text-[9px] px-1 py-0 h-4"
+                                            >
+                                              Hoje
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      )
+                                    })()
+                                  : '-'}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
