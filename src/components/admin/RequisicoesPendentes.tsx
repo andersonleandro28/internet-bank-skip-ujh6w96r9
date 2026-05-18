@@ -111,7 +111,7 @@ const MetadataDisplay = ({ req }: { req: RequisicaoPendente }) => {
     )
   }
 
-  if (req.tipo === 'boleto') {
+  if (req.tipo === 'boleto' || req.tipo === 'boleto_pago') {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
         <div className="sm:col-span-2">
@@ -128,7 +128,9 @@ const MetadataDisplay = ({ req }: { req: RequisicaoPendente }) => {
         <div>
           <span className="text-xs text-slate-500 font-medium uppercase">Vencimento</span>
           <div className="text-sm font-medium text-slate-800 mt-1">
-            {meta.vencimento ? new Date(meta.vencimento).toLocaleDateString('pt-BR') : '-'}
+            {meta.vencimento
+              ? new Date(meta.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+              : '-'}
           </div>
         </div>
       </div>
@@ -281,6 +283,7 @@ export function RequisicoesPendentes() {
   const tipos = [
     { value: 'todos', label: 'Todos os Tipos' },
     { value: 'boleto', label: 'Boleto' },
+    { value: 'boleto_pago', label: 'Boleto Pago' },
     { value: 'pix', label: 'PIX' },
     { value: 'ted', label: 'TED' },
     { value: 'carga_usdt', label: 'Carga USDT' },

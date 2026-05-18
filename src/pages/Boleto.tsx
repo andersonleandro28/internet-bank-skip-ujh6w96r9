@@ -27,6 +27,7 @@ export default function BoletoPage() {
   const [saving, setSaving] = useState(false)
   const [isValid, setIsValid] = useState<boolean | null>(null)
   const [valorBoleto, setValorBoleto] = useState<number>(0)
+  const [vencimentoBoleto, setVencimentoBoleto] = useState<string | null>(null)
 
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -34,6 +35,53 @@ export default function BoletoPage() {
 
   const validateLinhaDigitavel = (linha: string) => {
     const digits = linha.replace(/\D/g, '')
+    if (digits.length === 44) {
+      const base = digits.substring(0, 4) + digits.substring(5)
+      const dv = parseInt(digits[4], 10)
+
+      if (digits[0] === '8') {
+        // Arrecadação 44 digits
+        const isMod10 = ['6', '7'].includes(digits[2])
+        if (isMod10) {
+          let sum = 0
+          let multiplier = 2
+          for (let i = base.length - 1; i >= 0; i--) {
+            let res = parseInt(base[i]) * multiplier
+            if (res > 9) res = Math.floor(res / 10) + (res % 10)
+            sum += res
+            multiplier = multiplier === 2 ? 1 : 2
+          }
+          let expected = 10 - (sum % 10)
+          if (expected === 10) expected = 0
+          return expected === dv
+        } else {
+          let sum = 0
+          let multiplier = 2
+          for (let i = base.length - 1; i >= 0; i--) {
+            sum += parseInt(base[i]) * multiplier
+            multiplier = multiplier === 9 ? 2 : multiplier + 1
+          }
+          const remainder = sum % 11
+          let expected = remainder === 0 || remainder === 1 ? 0 : 11 - remainder
+          return expected === dv
+        }
+      } else {
+        // Banco 44 digits
+        let soma = 0
+        let peso = 2
+        for (let i = base.length - 1; i >= 0; i--) {
+          soma += parseInt(base[i]) * peso
+          peso = peso === 9 ? 2 : peso + 1
+        }
+        const resto = soma % 11
+        let digitoEsperado = 11 - resto
+        if (digitoEsperado === 0 || digitoEsperado === 10 || digitoEsperado === 11) {
+          digitoEsperado = 1
+        }
+        return digitoEsperado === dv
+      }
+    }
+
     if (digits.length < 40 || digits.length > 48) return false
 
     if (digits.length === 48) {
@@ -126,7 +174,41 @@ export default function BoletoPage() {
     if (digits.length === 47) {
       return parseInt(digits.substring(37, 47), 10) / 100
     }
+    if (digits.length === 44) {
+      if (digits[0] === '8') {
+        return parseInt(digits.substring(4, 15), 10) / 100
+      }
+      return parseInt(digits.substring(9, 19), 10) / 100
+    }
     return (parseInt(digits.substring(0, 4), 10) || 15000) / 100
+  }
+
+  const extractDueDate = (linha: string): string | null => {
+    const digits = linha.replace(/\D/g, '')
+    let fatorStr = ''
+
+    if (digits.length === 47) {
+      fatorStr = digits.substring(33, 37)
+    } else if (digits.length === 44 && digits[0] !== '8') {
+      fatorStr = digits.substring(5, 9)
+    }
+
+    if (fatorStr) {
+      const fator = parseInt(fatorStr, 10)
+      if (isNaN(fator) || fator === 0) return null
+
+      const baseDate = new Date('1997-10-07T00:00:00Z')
+      baseDate.setUTCDate(baseDate.getUTCDate() + fator)
+
+      const now = new Date()
+      if (now.getFullYear() >= 2025 && baseDate.getFullYear() < 2015) {
+        baseDate.setUTCDate(baseDate.getUTCDate() + 10000)
+      }
+
+      return baseDate.toISOString()
+    }
+
+    return null
   }
 
   useEffect(() => {
@@ -135,6 +217,7 @@ export default function BoletoPage() {
       setIsValid(null)
       setLoading(false)
       setValorBoleto(0)
+      setVencimentoBoleto(null)
       return
     }
 
@@ -146,8 +229,10 @@ export default function BoletoPage() {
       setIsValid(valid)
       if (valid) {
         setValorBoleto(extractValue(digits))
+        setVencimentoBoleto(extractDueDate(digits))
       } else {
         setValorBoleto(0)
+        setVencimentoBoleto(null)
       }
       setLoading(false)
     }, 400)
@@ -197,14 +282,16 @@ export default function BoletoPage() {
           }
           detectCode()
         } else {
-          // Alternative fallback for unsupported browsers (iOS/Safari)
-          timeoutId = setTimeout(() => {
-            handleScanSuccess('826000000016500012345673890123456786901234567898')
-            toast.success('Leitura simulada (Navegador sem suporte nativo a BarcodeDetector)')
-          }, 3500)
+          setCameraError(
+            'Câmera não suportada pelo seu dispositivo para leitura automática. Por favor, digite o código de barras manualmente.',
+          )
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop())
+            stream = null
+          }
         }
       } catch (err) {
-        setCameraError('Não foi possível acessar a câmera. Verifique as permissões.')
+        setCameraError('Não foi possível acessar a câmera. Verifique as permissões do navegador.')
       }
     }
 
@@ -232,12 +319,17 @@ export default function BoletoPage() {
 
     setSaving(true)
     try {
+      const metadados: any = { codigo_barras: codigo.replace(/\D/g, '') }
+      if (vencimentoBoleto) {
+        metadados.vencimento = vencimentoBoleto
+      }
+
       const { error: reqError } = await supabase.rpc('criar_requisicao_transferencia', {
         p_user_id: user.id,
         p_tipo: 'boleto',
         p_valor: valorBoleto,
         p_taxa: 0,
-        p_metadados: { codigo_barras: codigo.replace(/\D/g, '') },
+        p_metadados: metadados,
       })
 
       if (reqError) throw reqError
@@ -256,6 +348,7 @@ export default function BoletoPage() {
       setCodigo('')
       setIsValid(null)
       setValorBoleto(0)
+      setVencimentoBoleto(null)
       refreshData()
     } catch (err: any) {
       console.error(err)
@@ -349,13 +442,23 @@ export default function BoletoPage() {
               </div>
 
               {isSuccess && !loading && valorBoleto > 0 && (
-                <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                <div className="pt-2 space-y-2 animate-in fade-in slide-in-from-top-2">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
                     <span className="text-slate-500 text-sm font-medium">Valor do Boleto:</span>
                     <span className="text-lg font-bold text-slate-800">
                       R$ {valorBoleto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
+                  {vencimentoBoleto && (
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                      <span className="text-slate-500 text-sm font-medium">Vencimento:</span>
+                      <span className="text-lg font-bold text-slate-800">
+                        {new Date(vencimentoBoleto).toLocaleDateString('pt-BR', {
+                          timeZone: 'UTC',
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
